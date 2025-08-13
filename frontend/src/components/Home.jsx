@@ -1,6 +1,7 @@
 // src/components/Home.jsx
 import React, { useState } from 'react';
 import '../styles.css';
+import { Link } from 'react-router-dom';
 
 function Home({ navigate }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -14,12 +15,8 @@ function Home({ navigate }) {
       <div className="header">
         <div className="logo">Hostel Management</div>
         <div className="user-info">
-          <button className="btn btn-secondary" onClick={() => navigate('login')}>
-            Login
-          </button>
-          <button className="btn btn-secondary" onClick={() => navigate('register')}>
-            Register
-          </button>
+          <Link to="/login" className="btn btn-secondary">Login</Link>
+      <Link to="/register" className="btn btn-secondary">Register</Link>
           <div style={{ position: 'relative' }}>
             <button className="btn btn-secondary" onClick={toggleProfileMenu}>
               Profile ▾
