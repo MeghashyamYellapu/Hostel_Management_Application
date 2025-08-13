@@ -1,5 +1,7 @@
 // src/App.jsx
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
 import Home from './components/Home';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -12,22 +14,20 @@ import GatePass from './components/GatePass';
 import './styles.css';
 
 function App() {
-  const [screen, setScreen] = useState('home');
-
-  const navigate = (target) => setScreen(target);
-
   return (
-    <div>
-      {screen === 'home' && <Home navigate={navigate} />}
-      {screen === 'login' && <Login navigate={navigate} />}
-      {screen === 'register' && <Register navigate={navigate} />}
-      {screen === 'student-dashboard' && <StudentDashboard navigate={navigate} />}
-      {screen === 'new-request' && <NewRequest navigate={navigate} />}
-      {screen === 'hod-dashboard' && <HodDashboard />} 
-      {screen === 'warden-dashboard' && <WardenDashboard />} 
-      {screen === 'security-dashboard' && <SecurityDashboard />} 
-      {screen === 'gate-pass' && <GatePass navigate={navigate} />} 
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/student-dashboard" element={<StudentDashboard />} />
+        <Route path="/new-request" element={<NewRequest />} />
+        <Route path="/hod-dashboard" element={<HodDashboard />} />
+        <Route path="/warden-dashboard" element={<WardenDashboard />} />
+        <Route path="/security-dashboard" element={<SecurityDashboard />} />
+        <Route path="/gate-pass" element={<GatePass />} />
+      </Routes>
+    </Router>
   );
 }
 
