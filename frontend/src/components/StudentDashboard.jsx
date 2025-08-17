@@ -1,102 +1,142 @@
-// src/components/StudentDashboard.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import Header from './common/Header';
 import '../styles.css';
 
-function StudentDashboard({ navigate }) {
+function StudentDashboard() {
+  const navigate = useNavigate();
+  const [requests, setRequests] = useState([]);
+  const [stats, setStats] = useState({ total: 0, approved: 0, pending: 0, rejected: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:5000/api/student/requests', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setRequests(data);
+          const total = data.length;
+          const approved = data.filter(req => req.status.includes('approved')).length;
+          const pending = data.filter(req => req.status.includes('pending')).length;
+          const rejected = data.filter(req => req.status.includes('rejected')).length;
+          setStats({ total, approved, pending, rejected });
+        } else {
+          console.error(data.message);
+        }
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRequests();
+  }, []);
+
+  const handleGeneratePass = async (requestId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/student/generate-pass/${requestId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message);
+        navigate(`/gate-pass/${data.gatePass._id}`);
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      alert("Server error. Failed to generate gate pass.");
+    }
+  };
+
+  if (loading) {
+    return <div className="screen active" id="student-dashboard">Loading...</div>;
+  }
+
+  const getStatusBadge = (status) => {
+    if (status.includes('approved')) return 'status-approved';
+    if (status.includes('pending')) return 'status-pending';
+    if (status.includes('rejected')) return 'status-rejected';
+    if (status.includes('gate_pass_generated')) return 'status-approved';
+    return '';
+  };
+
   return (
     <div className="screen active" id="student-dashboard">
-      <div className="header">
-        <div className="logo">🏠 Student Portal</div>
-        <div className="user-info">
-          <span>Welcome, John Doe</span>
-          <div className="avatar">JD</div>
-        </div>
-      </div>
+      <Header title="Student Portal" />
       <div className="content">
         <div className="dashboard-stats">
           <div className="stat-card">
-            <div className="stat-number">3</div>
+            <div className="stat-number">{stats.total}</div>
             <div className="stat-label">Total Requests</div>
           </div>
           <div className="stat-card">
-            <div className="stat-number">2</div>
+            <div className="stat-number">{stats.approved}</div>
             <div className="stat-label">Approved</div>
           </div>
           <div className="stat-card">
-            <div className="stat-number">1</div>
+            <div className="stat-number">{stats.pending}</div>
             <div className="stat-label">Pending</div>
           </div>
           <div className="stat-card">
-            <div className="stat-number">0</div>
+            <div className="stat-number">{stats.rejected}</div>
             <div className="stat-label">Rejected</div>
           </div>
         </div>
-
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h3>My Leave Requests</h3>
-          <button className="btn btn-primary" onClick={() => navigate('new-request')}>New Request</button>
+          <Link to="/new-request" className="btn btn-primary" style={{ textAlign: 'center' }}>
+            New Request
+          </Link>
         </div>
-
-        {/* Example request card */}
-        <div className="request-card">
-          <div className="request-header">
-            <div className="request-title">Day Pass - Medical Appointment</div>
-            <span className="status-badge status-approved">Approved</span>
-          </div>
-          <div className="request-details">
-            <div className="detail-item">
-              <div className="detail-label">Student</div>
-              <div className="detail-value">John Doe (CS, 3rd Year)</div>
+        {requests.length > 0 ? (
+          requests.map(request => (
+            <div className="request-card" key={request._id}>
+              <div className="request-header">
+                <div className="request-title">{request.leaveType} - {request.reason}</div>
+                <span className={`status-badge ${getStatusBadge(request.status)}`}>{request.status.replace('_', ' ')}</span>
+              </div>
+              <div className="request-details">
+                <div className="detail-item">
+                  <div className="detail-label">Student</div>
+                  <div className="detail-value">John Doe (CS, 3rd Year)</div>
+                </div>
+                <div className="detail-item">
+                  <div className="detail-label">Leave Type</div>
+                  <div className="detail-value">{request.leaveType}</div>
+                </div>
+                <div className="detail-item">
+                  <div className="detail-label">Duration</div>
+                  <div className="detail-value">
+                    {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
+                    {request.leaveType === 'day-pass' && ` (${request.startTime} - ${request.endTime})`}
+                  </div>
+                </div>
+              </div>
+              <div className="approval-actions">
+                {request.status === 'warden_approved' && (
+                  <button onClick={() => handleGeneratePass(request._id)} className="btn btn-success" style={{ textAlign: 'center' }}>
+                    Generate Gate Pass
+                  </button>
+                )}
+                {request.status === 'gate_pass_generated' && (
+                   <Link to={`/gate-pass/${request._id}`} className="btn btn-success" style={{ textAlign: 'center' }}>
+                    View Gate Pass
+                  </Link>
+                )}
+                <button className="btn btn-secondary">View Details</button>
+              </div>
             </div>
-            <div className="detail-item">
-              <div className="detail-label">Leave Type</div>
-              <div className="detail-value">Day Pass</div>
-            </div>
-            <div className="detail-item">
-              <div className="detail-label">Time</div>
-              <div className="detail-value">Aug 1, 2025 (10:00 AM - 2:00 PM)</div>
-            </div>
-            <div className="detail-item">
-              <div className="detail-label">Warden Comments</div>
-              <div className="detail-value">"Medical emergency, urgent approval."</div>
-            </div>
-          </div>
-          <div className="approval-actions">
-            <button className="btn btn-success" onClick={() => navigate('gate-pass')}>Generate Gate Pass</button>
-            <button className="btn btn-danger">Reject</button>
-            <button className="btn btn-secondary">View Details</button>
-          </div>
-        </div>
-
-        {/* Additional card (example) */}
-        <div className="request-card">
-          <div className="request-header">
-            <div className="request-title">Active Gate Pass - Sarah Wilson</div>
-            <span className="status-badge status-approved">Active</span>
-          </div>
-          <div className="request-details">
-            <div className="detail-item">
-              <div className="detail-label">Student</div>
-              <div className="detail-value">Sarah Wilson (CS, 2nd Year)</div>
-            </div>
-            <div className="detail-item">
-              <div className="detail-label">Pass ID</div>
-              <div className="detail-value">GP-2025-001234</div>
-            </div>
-            <div className="detail-item">
-              <div className="detail-label">Valid Until</div>
-              <div className="detail-value">Aug 1, 2025 - 6:00 PM</div>
-            </div>
-            <div className="detail-item">
-              <div className="detail-label">Status</div>
-              <div className="detail-value">Out of Campus</div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button className="btn btn-warning">Mark as Returned</button>
-            <button className="btn btn-secondary">View Pass</button>
-          </div>
-        </div>
+          ))
+        ) : (
+          <p style={{ textAlign: 'center', color: '#ccc' }}>No leave requests found.</p>
+        )}
       </div>
     </div>
   );

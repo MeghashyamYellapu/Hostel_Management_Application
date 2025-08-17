@@ -292,8 +292,8 @@ body {
 }
 
 .qr-code {
-  width: 120px;
-  height: 120px;
+  width: 130px;
+  height: 130px;
   background: white;
   margin: 0 auto 20px;
   border-radius: 8px;
@@ -331,3 +331,4 @@ body {
   margin: 40px;
   user-select: none;
 }
+

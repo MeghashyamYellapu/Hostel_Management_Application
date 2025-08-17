@@ -1,102 +1,144 @@
-// src/components/HodDashboard.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import Header from './common/Header';
 import '../styles.css';
 
 function HodDashboard() {
+  const [requests, setRequests] = useState([]);
+  const [stats, setStats] = useState({ pending: 0, approvedThisMonth: 0, rejected: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:5000/api/hod/requests', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setRequests(data);
+          setStats(prev => ({ ...prev, pending: data.length }));
+        }
+      } catch (err) {
+        console.error('Error fetching HOD requests:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRequests();
+  }, []);
+
+  const handleApprovalAction = async (requestId, status) => {
+    const comments = prompt(`Enter comments for ${status}:`);
+    if (comments === null) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/hod/requests/${requestId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status, comments })
+      });
+      if (res.ok) {
+        setRequests(requests.filter(req => req._id !== requestId));
+        alert(`Request ${status} successfully.`);
+      } else {
+        const data = await res.json();
+        alert(`Failed to update request: ${data.message}`);
+      }
+    } catch (err) {
+      alert('Server error. Failed to update request.');
+    }
+  };
+  
+  const getSecondPhotoUrl = (pin) => {
+    // Replace with your actual external photo API endpoint
+    return `https://media.campx.in/cec/student-photos/977.jpg`;
+  };
+
+  if (loading) {
+    return <div className="screen active" id="hod-dashboard">Loading...</div>;
+  }
+
   return (
     <div className="screen active" id="hod-dashboard">
-      <div className="header">
-        <div className="logo">🏠 HOD Portal</div>
-        <div className="user-info">
-          <span>Dr. Smith (CS Dept)</span>
-          <div className="avatar">DS</div>
-        </div>
-      </div>
+      <Header title="HOD Portal" />
       <div className="content">
         <div className="dashboard-stats">
           <div className="stat-card">
-            <div className="stat-number">8</div>
+            <div className="stat-number">{stats.pending}</div>
             <div className="stat-label">Pending Approvals</div>
           </div>
           <div className="stat-card">
-            <div className="stat-number">45</div>
+            <div className="stat-number">{stats.approvedThisMonth}</div>
             <div className="stat-label">Approved This Month</div>
           </div>
           <div className="stat-card">
-            <div className="stat-number">3</div>
+            <div className="stat-number">{stats.rejected}</div>
             <div className="stat-label">Rejected</div>
           </div>
         </div>
-
         <div className="nav-tabs">
           <div className="nav-tab active">Pending Requests</div>
           <div className="nav-tab">Approved</div>
           <div className="nav-tab">Rejected</div>
         </div>
-
-        <div className="request-card">
-          <div className="request-header">
-            <div className="request-title">John Doe - Weekend Home Visit</div>
-            <span className="status-badge status-pending">Pending</span>
-          </div>
-          <div className="request-details">
-            <div className="detail-item">
-              <div className="detail-label">Student</div>
-              <div className="detail-value">John Doe (CS, 3rd Year)</div>
+        {requests.length > 0 ? (
+          requests.map(request => (
+            <div className="request-card" key={request._id}>
+              <div className="request-header">
+                <div className="request-title">{request.student.fullName} - {request.reason}</div>
+                <span className="status-badge status-pending">Pending</span>
+              </div>
+              <div className="profile-container" style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '15px' }}>
+                <div className="profile-pic-wrapper">
+                    {/* <img src={request.student.photo.secure_url} alt="Uploaded Profile" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%' }} /> */}
+                  <div className="profile-pic-wrapper">
+                      {request.student.photo?.secure_url ? (
+                          <img src={request.student.photo.secure_url} alt="Uploaded Profile" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%' }} />
+                      ) : (
+                          <div style={{ width: '100px', height: '100px', backgroundColor: '#ccc', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+                              No Photo
+                          </div>
+                      )}
+                  </div>
+                </div>
+                <div className="profile-pic-wrapper">
+                    <img src={getSecondPhotoUrl(request.student.pin)} alt="Official Profile" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%' }} />
+                </div>
+              </div>
+              <div className="request-details">
+                <div className="detail-item">
+                  <div className="detail-label">Student</div>
+                  <div className="detail-value">{request.student.fullName} ({request.student.branch}, {request.student.year})</div>
+                </div>
+                <div className="detail-item">
+                  <div className="detail-label">Leave Type</div>
+                  <div className="detail-value">{request.leaveType}</div>
+                </div>
+                <div className="detail-item">
+                  <div className="detail-label">Duration</div>
+                  <div className="detail-value">
+                    {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className="detail-item">
+                  <div className="detail-label">Reason</div>
+                  <div className="detail-value">{request.reason}</div>
+                </div>
+              </div>
+              <div className="approval-actions">
+                <button className="btn btn-success" onClick={() => handleApprovalAction(request._id, 'approved')}>Approve</button>
+                <button className="btn btn-danger" onClick={() => handleApprovalAction(request._id, 'rejected')}>Reject</button>
+                <button className="btn btn-secondary">View Details</button>
+              </div>
             </div>
-            <div className="detail-item">
-              <div className="detail-label">Leave Type</div>
-              <div className="detail-value">Overnight Leave</div>
-            </div>
-            <div className="detail-item">
-              <div className="detail-label">Duration</div>
-              <div className="detail-value">Aug 5-6, 2025</div>
-            </div>
-            <div className="detail-item">
-              <div className="detail-label">Reason</div>
-              <div className="detail-value">Family function at home</div>
-            </div>
-          </div>
-          <div className="approval-actions">
-            <button className="btn btn-success">Approve</button>
-            <button className="btn btn-danger">Reject</button>
-            <button className="btn btn-secondary">View Details</button>
-          </div>
-          <div className="comment-section">
-            <label>Comments (Optional)</label>
-            <textarea rows="2" placeholder="Add comments for this request"></textarea>
-          </div>
-        </div>
-
-        <div className="request-card">
-          <div className="request-header">
-            <div className="request-title">Sarah Wilson - Medical Appointment</div>
-            <span className="status-badge status-pending">Pending</span>
-          </div>
-          <div className="request-details">
-            <div className="detail-item">
-              <div className="detail-label">Student</div>
-              <div className="detail-value">Sarah Wilson (CS, 2nd Year)</div>
-            </div>
-            <div className="detail-item">
-              <div className="detail-label">Leave Type</div>
-              <div className="detail-value">Day Pass</div>
-            </div>
-            <div className="detail-item">
-              <div className="detail-label">Time</div>
-              <div className="detail-value">Aug 2, 2025 (9:00 AM - 12:00 PM)</div>
-            </div>
-            <div className="detail-item">
-              <div className="detail-label">Reason</div>
-              <div className="detail-value">Dental appointment</div>
-            </div>
-          </div>
-          <div className="approval-actions">
-            <button className="btn btn-success">Approve</button>
-            <button className="btn btn-danger">Reject</button>
-            <button className="btn btn-secondary">View Details</button>
-          </div>
-        </div>
+          ))
+        ) : (
+          <p style={{ textAlign: 'center', marginTop: '20px' }}>No pending requests for your department.</p>
+        )}
       </div>
     </div>
   );

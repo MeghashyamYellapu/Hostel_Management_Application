@@ -1,53 +1,125 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { QRCodeCanvas } from 'qrcode.react';
+import Header from './common/Header';
 import '../styles.css';
 
-function GatePass({ navigate }) {
-  const pinNumber = "CS21B001";
+function GatePass() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [gatePass, setGatePass] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [studentPin, setStudentPin] = useState('Loading...');
 
   useEffect(() => {
-    // Block Print Screen key
     const handleKeyDown = (e) => {
       if (e.key === "PrintScreen") {
         alert("Screenshots are disabled for this page.");
-        navigator.clipboard.writeText(""); // clear clipboard
+        return false;
       }
     };
-
-    // Disable right click
     const handleContextMenu = (e) => e.preventDefault();
-
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("contextmenu", handleContextMenu);
-
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("contextmenu", handleContextMenu);
     };
   }, []);
 
+  useEffect(() => {
+    const fetchGatePass = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`http://localhost:5000/api/student/gate-pass/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setGatePass(data);
+          setStudentPin(data.student.pin);
+        } else {
+          setError(data.message || 'Failed to fetch gate pass.');
+        }
+      } catch (err) {
+        setError('Server error. Could not fetch gate pass.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGatePass();
+  }, [id]);
+
+  if (loading) return <div className="screen active">Loading Gate Pass...</div>;
+  if (error) return <div className="screen active" style={{ color: 'red', textAlign: 'center' }}>{error}</div>;
+  if (!gatePass) return <div className="screen active">No gate pass data found.</div>;
+  
+  const formatDate = (date) => new Date(date).toLocaleDateString();
+  const formatTime = (date) => new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const getSecondPhotoUrl = (pin) => {
+    return `https://media.campx.in/cec/student-photos/977.jpg`;
+  };
+
   return (
     <div className="gatepass-container">
-      {/* Repeated watermark layer */}
       <div className="watermark-grid">
         {Array.from({ length: 50 }).map((_, i) => (
-          <span key={i}>{pinNumber}</span>
+          <span key={i}>{studentPin}</span>
         ))}
       </div>
-
       <div className="screen active" id="gate-pass">
-        <div className="header">
-          <div className="logo">🏠 Official Gate Pass</div>
-          <div className="user-info">
-            <span>Print/Download</span>
-          </div>
-        </div>
-
+        <Header title="Official Gate Pass" />
         <div className="content">
           <div className="gate-pass">
             <h2>🏫 COLLEGE HOSTEL</h2>
             <h3>OFFICIAL GATE PASS</h3>
 
-            <div className="qr-code">QR CODE</div>
+            {/* <div className="gate-pass-header" style={{ display: 'flex',justifyContent: 'center', gap: '10px', alignItems: 'center', marginBottom: '20px' }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div className="profile-pic-wrapper" style={{ width: '160px', height: '160px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff' }}>
+                        <img src={gatePass.student.photo?.secure_url} alt="User Uploaded" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    <small>User Uploaded Photo</small>
+                </div>
+                <div className="qr-code">
+                    {gatePass.encryptedData && (
+                        <QRCodeCanvas value={gatePass.encryptedData} size={115} />
+                    )}
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                    <div className="profile-pic-wrapper" style={{ width: '160px', height: '160px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff' }}>
+                        <img src={getSecondPhotoUrl(gatePass.student.pin)} alt="Official" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    <small>Official Photo (PIN: {gatePass.student.pin})</small>
+                </div>
+            </div> */}
+            <div className="gate-pass-header" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px' }}>
+              {/* Profile Photo 1 */}
+              <div style={{ textAlign: 'center', margin: '0 15px' }}> {/* Added margin */}
+                  <div className="profile-pic-wrapper" style={{ width: '160px', height: '160px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff' }}>
+                      <img src={gatePass.student.photo?.secure_url} alt="User Uploaded" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                  <small>User Uploaded Photo</small>
+              </div>
+
+              {/* QR Code */}
+              <div className="qr-code" style={{ margin: '0 15px' }}> {/* Added margin */}
+                  {gatePass.encryptedData && (
+                      <QRCodeCanvas value={gatePass.encryptedData} size={120} />
+                  )}
+              </div>
+
+              {/* Profile Photo 2 */}
+              <div style={{ textAlign: 'center', margin: '0 15px' }}> {/* Added margin */}
+                  <div className="profile-pic-wrapper" style={{ width: '160px', height: '160px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff' }}>
+                      <img src={getSecondPhotoUrl(gatePass.student.pin)} alt="Official" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                  <small>Official Photo (PIN: {gatePass.student.pin})</small>
+              </div>
+          </div>
 
             <div className="pass-details">
               <div style={{
@@ -56,20 +128,19 @@ function GatePass({ navigate }) {
                 gap: '20px',
                 textAlign: 'left',
               }}>
-                <div><strong>Pass ID:</strong><br /> GP-2025-001235</div>
-                <div><strong>Issue Date:</strong><br /> Aug 1, 2025 - 9:45 AM</div>
-                <div><strong>Student Name:</strong><br /> John Doe</div>
-                <div><strong>PIN Number:</strong><br /> {pinNumber}</div>
-                <div><strong>Branch/Year:</strong><br /> Computer Science - 3rd Year</div>
-                <div><strong>Contact:</strong><br /> +91 9876543210</div>
-                <div><strong>Leave Type:</strong><br /> Day Pass</div>
-                <div><strong>Valid Until:</strong><br /> Aug 1, 2025 - 2:00 PM</div>
+                <div><strong>Pass ID:</strong><br /> {gatePass.passId}</div>
+                <div><strong>Issue Date:</strong><br /> {formatDate(gatePass.issuedDate)} - {formatTime(gatePass.issuedDate)}</div>
+                <div><strong>Student Name:</strong><br /> {gatePass.student.fullName}</div>
+                <div><strong>PIN Number:</strong><br /> {gatePass.student.pin}</div>
+                <div><strong>Branch/Year:</strong><br /> {gatePass.student.branch} - {gatePass.student.year}</div>
+                <div><strong>Leave Type:</strong><br /> {gatePass.leaveRequest.leaveType}</div>
+                <div><strong>Valid Until:</strong><br /> {formatDate(gatePass.validUntil)} - {formatTime(gatePass.validUntil)}</div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <strong>Reason:</strong><br /> Medical appointment at city hospital
+                  <strong>Reason:</strong><br /> {gatePass.leaveRequest.reason}
                 </div>
               </div>
             </div>
-
+            
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr 1fr',
@@ -78,16 +149,19 @@ function GatePass({ navigate }) {
               fontSize: '14px',
             }}>
               <div>
-                <strong>HOD Approval</strong><br /> ✅ Dr. Smith
-                <br /> <small>Aug 1, 9:30 AM</small>
+                <strong>HOD Approval</strong><br /> 
+                {gatePass.leaveRequest.hodApproval?.status === 'approved' ? '✅' : '❌'} {gatePass.leaveRequest.hodApproval?.approvedBy?.fullName || 'Pending'}
+                <br /> <small>{gatePass.leaveRequest.hodApproval?.timestamp ? formatDate(gatePass.leaveRequest.hodApproval.timestamp) : 'N/A'}</small>
               </div>
               <div>
-                <strong>Warden Approval</strong><br /> ✅ Mr. Johnson
-                <br /> <small>Aug 1, 9:40 AM</small>
+                <strong>Warden Approval</strong><br /> 
+                {gatePass.leaveRequest.wardenApproval?.status === 'approved' ? '✅' : '❌'} {gatePass.leaveRequest.wardenApproval?.approvedBy?.fullName || 'Pending'}
+                <br /> <small>{gatePass.leaveRequest.wardenApproval?.timestamp ? formatDate(gatePass.leaveRequest.wardenApproval.timestamp) : 'N/A'}</small>
               </div>
               <div>
-                <strong>Security Clearance</strong><br /> ✅ Gate 1
-                <br /> <small>Aug 1, 9:45 AM</small>
+                <strong>Security Clearance</strong><br /> 
+                {gatePass.securityOfficer?.exit ? '✅' : 'Pending'} {gatePass.securityOfficer?.exit?.fullName || 'Gate 1'}
+                <br /> <small>{gatePass.securityOfficer?.exit ? formatDate(gatePass.exitTime) : 'N/A'}</small>
               </div>
             </div>
 
@@ -104,17 +178,16 @@ function GatePass({ navigate }) {
               <p>• Lost passes should be reported immediately</p>
             </div>
           </div>
-
           <div style={{ textAlign: 'center', marginTop: '20px' }}>
             <button className="btn btn-primary" style={{ marginRight: '10px' }}>
-              📱 Send to Phone
+              📱 Show to Security
             </button>
             <button className="btn btn-secondary" style={{ marginRight: '10px' }}>
               🖨️ Print Pass
             </button>
             <button
               className="btn btn-secondary"
-              onClick={() => navigate('student-dashboard')}
+              onClick={() => navigate('/student-dashboard')}
             >
               ← Back to Dashboard
             </button>
