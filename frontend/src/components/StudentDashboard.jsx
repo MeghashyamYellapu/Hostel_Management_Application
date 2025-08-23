@@ -132,7 +132,7 @@ function StudentDashboard() {
               <div className="request-details">
                 <div className="detail-item">
                   <div className="detail-label">Student</div>
-                  <div className="detail-value">John Doe (CS, 3rd Year)</div>
+                  <div className="detail-value">{request.student.fullName} ({request.student.branch}, {request.student.year})</div>
                 </div>
                 <div className="detail-item">
                   <div className="detail-label">Leave Type</div>

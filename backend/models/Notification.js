@@ -12,7 +12,14 @@ const NotificationSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['leave_submitted', 'leave_approved', 'leave_rejected', 'gate_pass_generated', 'entry_logged', 'exit_logged', 'overdue_return', 'emergency_alert'],
+        enum: [
+            'leave_submitted',
+            'hod_approved',
+            'hod_rejected',
+            'warden_approved',
+            'warden_rejected',
+            'gate_pass_generated'
+        ],
         required: true
     },
     title: {

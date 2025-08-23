@@ -1,5 +1,7 @@
 const LeaveRequest = require('../models/LeaveRequest');
 const User = require('../models/User');
+const notificationService = require('../services/notificationService');
+const emailService = require('../services/emailService');
 
 exports.getPendingRequests = async (req, res) => {
     try {
@@ -11,7 +13,7 @@ exports.getPendingRequests = async (req, res) => {
             currentStage: 'hod',
             status: 'pending'
         })
-        .populate('student', 'fullName pin branch year photo'); // Include 'photo'
+        .populate('student', 'fullName pin branch year photo');
         const departmentRequests = requests.filter(req => req.student.branch === hod.department);
         res.status(200).json(departmentRequests);
     } catch (err) {
@@ -47,6 +49,34 @@ exports.updateRequestStatus = async (req, res) => {
             comments: comments
         });
         await leaveRequest.save();
+
+        // --- Notification Logic ---
+        if (leaveRequest.currentStage === 'warden') {
+            const wardens = await User.find({ role: 'warden' });
+            if (wardens.length > 0) {
+                const subject = `HOD ${status} Leave Request from ${leaveRequest.student.fullName}`;
+                const formattedMessage = `
+                    <h1>Leave Request: ${subject}</h1>
+                    <p><strong>Student Name:</strong> ${leaveRequest.student.fullName}</p>
+                    <p><strong>PIN Number:</strong> ${leaveRequest.student.pin}</p>
+                    <p><strong>Reason:</strong> ${leaveRequest.reason}</p>
+                    <p><strong>HOD Comments:</strong> ${comments}</p>
+                    <p>The request is now awaiting your final approval. Please log in to the portal to review.</p>
+                `;
+                for (const warden of wardens) {
+                    await emailService.sendEmail(warden.email, subject, formattedMessage);
+                    notificationService.sendNotification(
+                        warden._id,
+                        subject,
+                        `A leave request from ${leaveRequest.student.fullName} has been approved by the HOD and is awaiting your review.`,
+                        'hod_approved',
+                        { leaveRequestId: leaveRequest._id }
+                    );
+                }
+            }
+        }
+        // --- End Notification Logic ---
+        
         res.status(200).json({ message: `Request ${status} successfully`, leaveRequest });
     } catch (err) {
         console.error(err);

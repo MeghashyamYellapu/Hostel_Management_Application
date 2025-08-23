@@ -15,10 +15,6 @@ function GatePass() {
   const [watermarkText, setWatermarkText] = useState('');
 
   useEffect(() => {
-    // Generate watermark text with the current date and time
-    const currentDateTime = new Date().toLocaleString();
-    setWatermarkText(currentDateTime);
-
     const handleKeyDown = (e) => {
       if (e.key === "PrintScreen") {
         alert("Screenshots are disabled for this page.");
@@ -45,6 +41,8 @@ function GatePass() {
         if (res.ok) {
           setGatePass(data);
           setStudentPin(data.student.pin);
+          // Set the watermark text from the issuedDate
+          setWatermarkText(new Date(data.issuedDate).toLocaleString());
         } else {
           setError(data.message || 'Failed to fetch gate pass.');
         }
@@ -83,7 +81,7 @@ function GatePass() {
 
   return (
     <div className="gatepass-container">
-          <div className="watermark-grid">
+      <div className="watermark-grid">
         {Array.from({ length: 50 }).map((_, i) => (
           <span key={i}>{watermarkText}</span>
         ))}
