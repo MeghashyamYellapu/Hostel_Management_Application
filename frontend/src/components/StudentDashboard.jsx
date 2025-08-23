@@ -55,6 +55,33 @@ function StudentDashboard() {
     }
   };
 
+  const handleDeleteRequest = async (requestId) => {
+    if (!window.confirm('Are you sure you want to delete this request?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/student/requests/${requestId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRequests(prev => prev.filter(r => r._id !== requestId));
+        setStats(prev => ({
+          ...prev,
+          total: prev.total - 1,
+          approved: prev.approved - (data.status && data.status.includes('approved') ? 1 : 0),
+          pending: prev.pending - (data.status && data.status.includes('pending') ? 1 : 0),
+          rejected: prev.rejected - (data.status && data.status.includes('rejected') ? 1 : 0)
+        }));
+        alert('Request deleted successfully.');
+      } else {
+        alert(data.message || 'Failed to delete request.');
+      }
+    } catch (err) {
+      alert('Server error. Failed to delete request.');
+    }
+  };
+
   if (loading) {
     return <div className="screen active" id="student-dashboard">Loading...</div>;
   }
@@ -119,7 +146,7 @@ function StudentDashboard() {
                   </div>
                 </div>
               </div>
-              <div className="approval-actions">
+              <div className="approval-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 {request.status === 'warden_approved' && (
                   <button onClick={() => handleGeneratePass(request._id)} className="btn btn-success" style={{ textAlign: 'center' }}>
                     Generate Gate Pass
@@ -131,6 +158,9 @@ function StudentDashboard() {
                   </Link>
                 )}
                 <button className="btn btn-secondary">View Details</button>
+                <button className="btn btn-danger" onClick={() => handleDeleteRequest(request._id)}>
+                  Delete
+                </button>
               </div>
             </div>
           ))

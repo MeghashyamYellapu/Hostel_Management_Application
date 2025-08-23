@@ -10,6 +10,9 @@ function Login() {
     role: 'student'
   });
   const [message, setMessage] = useState('');
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotMsg, setForgotMsg] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -37,15 +40,38 @@ function Login() {
           navigate('/warden-dashboard');
         } else if (data.user.role === 'security') {
           navigate('/security-dashboard');
-        } else if (data.user.role === 'Admin') { // Add this check for the 'Admin' role
+        } else if (data.user.role === 'Admin') {
           navigate('/admin-dashboard');
-        } 
-        // Add other role-based navigation here
+        }
       } else {
         setMessage(`❌ ${data.error}`);
       }
     } catch (err) {
       setMessage('❌ Server error. Please try again.');
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setForgotMsg('');
+    if (!forgotEmail) {
+      setForgotMsg('Please enter your email.');
+      return;
+    }
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setForgotMsg('✅ Password reset link sent to your email.');
+      } else {
+        setForgotMsg(`❌ ${data.error || 'Failed to send reset link.'}`);
+      }
+    } catch (err) {
+      setForgotMsg('❌ Server error. Please try again.');
     }
   };
 
@@ -65,6 +91,14 @@ function Login() {
           <div className="form-group">
             <label>Password</label>
             <input type="password" name="password" onChange={handleChange} placeholder="Enter your password" required />
+            <div style={{ textAlign: 'right', marginTop: '5px' }}>
+              <span
+                style={{ color: '#4facfe', cursor: 'pointer', fontSize: '0.95em', textDecoration: 'underline' }}
+                onClick={() => setShowForgot(true)}
+              >
+                Forgot Password?
+              </span>
+            </div>
           </div>
           <div className="form-group">
             <label>Login As</label>
@@ -85,6 +119,38 @@ function Login() {
             </Link>
           </div>
         </form>
+
+        {/* Forgot Password Modal */}
+        {showForgot && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+          }}>
+            <div style={{ background: '#fff', padding: '30px', borderRadius: '8px', minWidth: '320px', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
+              <h3 style={{ marginBottom: '15px' }}>Forgot Password</h3>
+              <form onSubmit={handleForgotPassword}>
+                <input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={e => setForgotEmail(e.target.value)}
+                  placeholder="Enter your registered email"
+                  style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+                  required
+                />
+                <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
+                  Send Reset Link
+                </button>
+              </form>
+              {forgotMsg && <p style={{ color: forgotMsg.startsWith('✅') ? 'green' : 'red', marginTop: '10px' }}>{forgotMsg}</p>}
+              <button
+                onClick={() => { setShowForgot(false); setForgotEmail(''); setForgotMsg(''); }}
+                style={{ marginTop: '15px', background: 'none', border: 'none', color: '#4facfe', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

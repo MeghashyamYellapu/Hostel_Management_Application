@@ -53,3 +53,34 @@ exports.updateRequestStatus = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+// GET /api/hod/profile
+exports.getHodProfile = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({
+      name: user.fullName || user.name,
+      email: user.email,
+      password: user.password,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// PUT /api/hod/profile
+exports.updateHodProfile = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const { name, email, password } = req.body;
+    if (name) user.fullName = name;
+    if (email) user.email = email;
+    if (password) user.password = password; // Should hash in real app
+    await user.save();
+    res.json({ message: 'Profile updated successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};

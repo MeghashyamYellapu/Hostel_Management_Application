@@ -112,9 +112,45 @@ exports.generateGatePass = async (req, res) => {
         leaveRequest.status = 'gate_pass_generated';
         leaveRequest.currentStage = 'completed';
         await leaveRequest.save();
-        res.status(201).json({ message: 'Gate pass generated successfully', gatePass: newGatePass });
+                res.status(201).json({ message: 'Gate pass generated successfully', gatePass: newGatePass });
+        } catch (err) {
+                console.error("Error in generateGatePass:", err);
+                res.status(500).json({ message: 'Server error', details: err.message });
+        }
+};
+
+// GET /api/student/profile
+exports.getStudentProfile = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        res.json({
+            name: user.fullName || user.name,
+            email: user.email,
+            phone: user.phone || '',
+            branch: user.branch || '',
+            year: user.year || ''
+        });
     } catch (err) {
-        console.error("Error in generateGatePass:", err);
-        res.status(500).json({ message: 'Server error', details: err.message });
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// PUT /api/student/profile
+exports.updateStudentProfile = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        const { name, email, phone, branch, year, password } = req.body;
+        if (name) user.fullName = name;
+        if (email) user.email = email;
+        if (phone) user.phone = phone;
+        if (branch) user.branch = branch;
+        if (year) user.year = year;
+        if (password) user.password = password; // Should hash in real app
+        await user.save();
+        res.json({ message: 'Profile updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
     }
 };

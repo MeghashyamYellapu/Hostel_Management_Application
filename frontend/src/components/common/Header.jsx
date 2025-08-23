@@ -8,19 +8,7 @@ const Header = ({ title }) => {
   const [user, setUser] = useState(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
+  // Add missing function definitions
   const getUserDashboardRoute = (role) => {
     switch(role) {
       case 'student': return '/student-dashboard';
@@ -32,10 +20,23 @@ const Header = ({ title }) => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
   return (
     <div className="header">
       <div className="logo">🏠 {title}</div>
-      <div className="user-info">
+      <div className="user-info" style={{ position: 'relative' }}>
         {user && user.role !== 'student' && <Notifications />}
         <span onClick={() => setShowProfileMenu(!showProfileMenu)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
           {user ? `Welcome, ${user.fullName}` : 'Guest'}
@@ -52,7 +53,7 @@ const Header = ({ title }) => {
               style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
             />
           ) : (
-            user?.fullName.split(' ').map(n => n[0]).join('') || '?'
+            user?.fullName?.split(' ').map(n => n[0]).join('') || '?'
           )}
         </div>
         {showProfileMenu && (
@@ -84,6 +85,18 @@ const Header = ({ title }) => {
                   }}
                 >
                   Dashboard
+                </Link>
+                <Link
+                  to="/Profile"
+                  style={{
+                    padding: '10px 20px',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #eee',
+                    textDecoration: 'none',
+                    color: 'black'
+                  }}
+                >
+                  Profile
                 </Link>
                 <button
                   onClick={handleLogout}

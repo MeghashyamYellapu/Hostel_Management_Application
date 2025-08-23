@@ -9,8 +9,6 @@ function NewRequest() {
     reason: '',
     startDate: '',
     endDate: '',
-    startTime: '',
-    endTime: '',
     emergencyContact: '',
     additionalComments: ''
   });
@@ -95,18 +93,7 @@ function NewRequest() {
             </div>
           </div>
 
-          {formData.leaveType === 'day-pass' && (
-            <div className="form-row" id="timeFields">
-              <div className="form-group">
-                <label>Start Time</label>
-                <input type="time" name="startTime" value={formData.startTime} onChange={handleChange} required />
-              </div>
-              <div className="form-group">
-                <label>End Time</label>
-                <input type="time" name="endTime" value={formData.endTime} onChange={handleChange} required />
-              </div>
-            </div>
-          )}
+          {/* Removed start time and end time fields */}
 
           <div className="form-group">
             <label>Emergency Contact (if different from registered)</label>
