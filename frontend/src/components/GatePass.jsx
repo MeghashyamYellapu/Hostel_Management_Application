@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
 import Header from './common/Header';
 import '../styles.css';
+import { admissionData } from '../data/admissionData';
 
 function GatePass() {
   const { id } = useParams();
@@ -11,8 +12,13 @@ function GatePass() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [studentPin, setStudentPin] = useState('Loading...');
+  const [watermarkText, setWatermarkText] = useState('');
 
   useEffect(() => {
+    // Generate watermark text with the current date and time
+    const currentDateTime = new Date().toLocaleString();
+    setWatermarkText(currentDateTime);
+
     const handleKeyDown = (e) => {
       if (e.key === "PrintScreen") {
         alert("Screenshots are disabled for this page.");
@@ -60,14 +66,26 @@ function GatePass() {
   const formatTime = (date) => new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const getSecondPhotoUrl = (pin) => {
-    return `https://media.campx.in/cec/student-photos/977.jpg`;
+    const admissionNumber = admissionData[pin]?.admissionNumber;
+    if (admissionNumber) {
+        return `https://media.campx.in/cec/student-photos/${admissionNumber}.jpg`;
+    }
+    return '';
+  };
+  
+  const getSecondPhotoName = (pin) => {
+    return admissionData[pin]?.name || 'N/A';
+  };
+  
+  const getSecondPhotoBranch = (pin) => {
+    return admissionData[pin]?.branch || 'N/A';
   };
 
   return (
     <div className="gatepass-container">
-      <div className="watermark-grid">
+          <div className="watermark-grid">
         {Array.from({ length: 50 }).map((_, i) => (
-          <span key={i}>{studentPin}</span>
+          <span key={i}>{watermarkText}</span>
         ))}
       </div>
       <div className="screen active" id="gate-pass">
@@ -77,49 +95,29 @@ function GatePass() {
             <h2>🏫 COLLEGE HOSTEL</h2>
             <h3>OFFICIAL GATE PASS</h3>
 
-            {/* <div className="gate-pass-header" style={{ display: 'flex',justifyContent: 'center', gap: '10px', alignItems: 'center', marginBottom: '20px' }}>
+            <div className="gate-pass-header" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px', gap: '30px' }}>
                 <div style={{ textAlign: 'center' }}>
-                    <div className="profile-pic-wrapper" style={{ width: '160px', height: '160px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff' }}>
+                    <div className="profile-pic-wrapper" style={{ width: '100px', height: '100px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff' }}>
                         <img src={gatePass.student.photo?.secure_url} alt="User Uploaded" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
-                    <small>User Uploaded Photo</small>
+                    <div style={{ fontWeight: 'bold', fontSize: '14px', marginTop: '5px' }}>User Uploaded Photo</div>
+                    <small>{gatePass.student.fullName}</small>
                 </div>
                 <div className="qr-code">
                     {gatePass.encryptedData && (
-                        <QRCodeCanvas value={gatePass.encryptedData} size={115} />
+                        <QRCodeCanvas value={gatePass.encryptedData} size={120} />
                     )}
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                    <div className="profile-pic-wrapper" style={{ width: '160px', height: '160px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff' }}>
+                    <div className="profile-pic-wrapper" style={{ width: '100px', height: '100px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff' }}>
                         <img src={getSecondPhotoUrl(gatePass.student.pin)} alt="Official" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
-                    <small>Official Photo (PIN: {gatePass.student.pin})</small>
+                    <div style={{ fontWeight: 'bold', fontSize: '14px', marginTop: '5px' }}>Official Photo</div>
+                    <small>{getSecondPhotoName(gatePass.student.pin)}</small>
+                    <br />
+                    <small>{getSecondPhotoBranch(gatePass.student.pin)}</small>
                 </div>
-            </div> */}
-            <div className="gate-pass-header" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px' }}>
-              {/* Profile Photo 1 */}
-              <div style={{ textAlign: 'center', margin: '0 15px' }}> {/* Added margin */}
-                  <div className="profile-pic-wrapper" style={{ width: '160px', height: '160px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff' }}>
-                      <img src={gatePass.student.photo?.secure_url} alt="User Uploaded" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
-                  <small>User Uploaded Photo</small>
-              </div>
-
-              {/* QR Code */}
-              <div className="qr-code" style={{ margin: '0 15px' }}> {/* Added margin */}
-                  {gatePass.encryptedData && (
-                      <QRCodeCanvas value={gatePass.encryptedData} size={120} />
-                  )}
-              </div>
-
-              {/* Profile Photo 2 */}
-              <div style={{ textAlign: 'center', margin: '0 15px' }}> {/* Added margin */}
-                  <div className="profile-pic-wrapper" style={{ width: '160px', height: '160px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff' }}>
-                      <img src={getSecondPhotoUrl(gatePass.student.pin)} alt="Official" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
-                  <small>Official Photo (PIN: {gatePass.student.pin})</small>
-              </div>
-          </div>
+            </div>
 
             <div className="pass-details">
               <div style={{
