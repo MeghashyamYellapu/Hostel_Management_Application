@@ -26,7 +26,6 @@ exports.createLeaveRequest = async (req, res) => {
         const { leaveType, reason, startDate, endDate, startTime, endTime, emergencyContact, additionalComments } = req.body;
         const studentId = req.user.id;
         
-        // Fetch the student's details
         const student = await User.findById(studentId);
         if (!student) {
             return res.status(404).json({ message: 'Student not found.' });
@@ -48,14 +47,17 @@ exports.createLeaveRequest = async (req, res) => {
         });
         await newRequest.save();
 
-        // --- Notification Logic ---
         const approverRole = newRequest.currentStage;
         let approvers = [];
 
         if (approverRole === 'hod') {
-            approvers = await User.find({ role: 'hod', department: student.branch });
+            // Normalize the student's branch for a case-insensitive search
+            const normalizedBranch = student.branch.toLowerCase().trim();
+            approvers = await User.find({ 
+                role: 'hod', 
+                department: { $regex: new RegExp(`^${normalizedBranch}$`, 'i') } 
+            });
         } else if (approverRole === 'warden') {
-            // Fetch the warden regardless of department for emergency leaves
             approvers = await User.find({ role: 'warden' });
         }
 
@@ -73,9 +75,7 @@ exports.createLeaveRequest = async (req, res) => {
             `;
 
             for (const approver of approvers) {
-                // Send email notification
-                await emailService.sendEmail(approver.email, subject, formattedMessage);
-                // Send web notification (Socket.io)
+                notificationService.sendEmail(approver.email, subject, formattedMessage);
                 notificationService.sendNotification(
                     approver._id,
                     subject,
@@ -85,8 +85,6 @@ exports.createLeaveRequest = async (req, res) => {
                 );
             }
         }
-        // --- End Notification Logic ---
-
         res.status(201).json({ message: 'Leave request submitted successfully', request: newRequest });
     } catch (err) {
         console.error("Error submitting leave request:", err);

@@ -12,6 +12,10 @@ const generateToken = (id, role) => {
 exports.register = async (req, res) => {
   try {
     const { fullName, email, phone, branch, pin, year, parentPhone, guardianPhone, roomNumber, password } = req.body;
+    
+    // --- CONVERT PIN TO UPPERCASE ---
+    const uppercasePin = pin.toUpperCase();
+    
     let photo = {};
     if (req.file) {
         photo = {
@@ -25,7 +29,7 @@ exports.register = async (req, res) => {
     if (user) {
       return res.status(400).json({ error: 'User already exists with this email' });
     }
-    user = await User.findOne({ pin });
+    user = await User.findOne({ pin: uppercasePin }); // Use uppercase pin here
     if (user) {
       return res.status(400).json({ error: 'User already exists with this PIN number' });
     }
@@ -34,7 +38,7 @@ exports.register = async (req, res) => {
       email,
       phone,
       branch,
-      pin,
+      pin: uppercasePin, // Save the uppercase pin
       year,
       parentPhone,
       guardianPhone,
@@ -73,9 +77,85 @@ exports.login = async (req, res) => {
   }
 };
 
-// @desc    Forgot Password - Send OTP to email
-// @route   POST /api/auth/forgot-password
-// @access  Public
+exports.getProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('-password');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+exports.updateProfile = async (req, res) => {
+    const { fullName, phone, department, designation, email, pin } = req.body;
+
+    try {
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check for duplicate email
+        if (email && email !== user.email) {
+            const emailExists = await User.findOne({ email });
+            if (emailExists) {
+                return res.status(400).json({ message: 'This email is already in use.' });
+            }
+            user.email = email;
+        }
+
+        // --- CONVERT PIN TO UPPERCASE ---
+        const uppercasePin = pin ? pin.toUpperCase() : user.pin;
+        if (pin && uppercasePin !== user.pin) {
+            const pinExists = await User.findOne({ pin: uppercasePin });
+            if (pinExists) {
+                return res.status(400).json({ message: 'This PIN number is already in use.' });
+            }
+            user.pin = uppercasePin;
+        }
+
+        user.fullName = fullName || user.fullName;
+        user.phone = phone || user.phone;
+        
+        if (user.role.toLowerCase() === 'hod') {
+            user.department = department || user.department;
+            user.designation = designation || user.designation;
+        } else if (user.role.toLowerCase() === 'warden' || user.role.toLowerCase() === 'security' || user.role.toLowerCase() === 'admin') {
+            user.designation = designation || user.designation;
+        }
+
+        await user.save();
+        res.status(200).json({ message: 'Profile updated successfully', user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+exports.updatePassword = async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        if (!(await user.matchPassword(currentPassword))) {
+            return res.status(400).json({ message: 'Current password incorrect' });
+        }
+        user.password = newPassword;
+        await user.save();
+        res.status(200).json({ message: 'Password updated successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 exports.forgotPassword = async (req, res) => {
     const { email } = req.body;
 
