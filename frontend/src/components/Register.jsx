@@ -165,7 +165,7 @@ function Register() {
           <div className="form-row">
             <div className="form-group">
               <label>PIN Number</label>
-              <input type="text" name="pin" value={formData.pin} onChange={handleChange} required />
+              <input type="text" name="pin" value={formData.pin} onChange={handleChange} required style={{ textTransform: 'uppercase' }} />
             </div>
             <div className="form-group">
               <label>Year</label>

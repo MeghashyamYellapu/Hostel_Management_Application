@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Header from './common/Header'; // Import the common Header
 import '../styles.css';
 
 function NewRequest() {
@@ -47,13 +48,7 @@ function NewRequest() {
 
   return (
     <div className="screen active" id="new-request">
-      <div className="header">
-        <div className="logo">🏠 New Leave Request</div>
-        <div className="user-info">
-          <span>John Doe</span>
-          <div className="avatar">JD</div>
-        </div>
-      </div>
+      <Header title="New Leave Request" /> {/* Use the common Header */}
       <div className="content">
         <form style={{ maxWidth: '800px', margin: '0 auto' }} onSubmit={handleSubmit}>
           {message && <p style={{ textAlign: 'center', color: message.startsWith('❌') ? 'red' : 'green' }}>{message}</p>}
@@ -95,7 +90,7 @@ function NewRequest() {
             </div>
           </div>
 
-          {formData.leaveType === 'day-pass' && (
+          {/* {formData.leaveType === 'day-pass' && (
             <div className="form-row" id="timeFields">
               <div className="form-group">
                 <label>Start Time</label>
@@ -106,7 +101,7 @@ function NewRequest() {
                 <input type="time" name="endTime" value={formData.endTime} onChange={handleChange} required />
               </div>
             </div>
-          )}
+          )} */}
 
           <div className="form-group">
             <label>Emergency Contact (if different from registered)</label>

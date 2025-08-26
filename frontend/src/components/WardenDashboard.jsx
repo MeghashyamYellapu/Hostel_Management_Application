@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from './common/Header';
 import '../styles.css';
+import { admissionData } from '../data/admissionData'; // Import the admission data
 
 function WardenDashboard() {
   const [requests, setRequests] = useState([]);
@@ -53,8 +54,20 @@ function WardenDashboard() {
     }
   };
 
-  const getSecondPhotoUrl = (pin) => {
-    return `https://external-photo-source.com/${pin}.jpg`;
+  const getOfficialPhotoUrl = (pin) => {
+    const admissionNumber = admissionData[pin]?.admissionNumber;
+    if (admissionNumber) {
+        return `https://media.campx.in/cec/student-photos/${admissionNumber}.jpg`;
+    }
+    return '';
+  };
+  
+  const getOfficialPhotoName = (pin) => {
+    return admissionData[pin]?.name || 'N/A';
+  };
+  
+  const getOfficialPhotoBranch = (pin) => {
+    return admissionData[pin]?.branch || 'N/A';
   };
   
   if (loading) {
@@ -93,19 +106,26 @@ function WardenDashboard() {
               </div>
               <div className="profile-container" style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '15px' }}>
                 <div className="profile-pic-wrapper">
-                    {/* <img src={request.student.photo.secure_url} alt="Uploaded Profile" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%' }} /> */}
-                    <div className="profile-pic-wrapper">
-                        {request.student.photo?.secure_url ? (
-                            <img src={request.student.photo.secure_url} alt="Uploaded Profile" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%' }} />
-                        ) : (
-                            <div style={{ width: '100px', height: '100px', backgroundColor: '#ccc', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
-                                No Photo
-                            </div>
-                        )}
+                    <div style={{ textAlign: 'center' }}>
+                        <div className="profile-pic-wrapper" style={{ width: '100px', height: '100px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff' }}>
+                            {request.student?.photo?.secure_url ? (
+                                <img src={request.student.photo.secure_url} alt="Uploaded Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                <div style={{ width: '100px', height: '100px', backgroundColor: '#ccc', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>No Photo</div>
+                            )}
+                        </div>
+                        <small>User Uploaded</small>
                     </div>
                 </div>
                 <div className="profile-pic-wrapper">
-                    <img src={getSecondPhotoUrl(request.student.pin)} alt="Official Profile" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%' }} />
+                    <div style={{ textAlign: 'center' }}>
+                        <div className="profile-pic-wrapper" style={{ width: '100px', height: '100px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff' }}>
+                            <img src={getOfficialPhotoUrl(request.student.pin)} alt="Official Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                        <small>{getOfficialPhotoName(request.student.pin)}</small>
+                        <br/>
+                        <small>{getOfficialPhotoBranch(request.student.pin)}</small>
+                    </div>
                 </div>
               </div>
               <div className="request-details">

@@ -10,7 +10,9 @@ import HodDashboard from './components/HodDashboard';
 import WardenDashboard from './components/WardenDashboard';
 import SecurityDashboard from './components/SecurityDashboard';
 import GatePass from './components/GatePass';
-import AdminDashboard from './components/AdminDashboard'; // Assuming this exists now
+import AdminDashboard from './components/AdminDashboard';
+import NewStaff from './components/NewStaff';
+import Profile from './components/Profile';
 import './styles.css';
 
 function App() {
@@ -28,6 +30,8 @@ function App() {
           <Route path="/security-dashboard" element={<SecurityDashboard />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/gate-pass/:id" element={<GatePass />} />
+          <Route path="/new-staff" element={<NewStaff />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </Router>
     </NotificationProvider>

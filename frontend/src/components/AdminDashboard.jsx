@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import '../styles.css';
+import { useNavigate } from 'react-router-dom';
 
 function AdminDashboard() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -93,9 +95,31 @@ function AdminDashboard() {
     <div className="screen active" id="admin-dashboard">
       <div className="header">
         <div className="logo">🏠 Admin Portal</div>
-        <div className="user-info">
+        <div className="user-info" style={{ position: 'relative' }}>
           <span>Super Admin</span>
-          <div className="avatar">👑</div>
+          <div
+            className="adminProfile"
+            style={{ cursor: 'pointer', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={() => setShowDropdown((prev) => !prev)}
+            title="Menu"
+          >
+            {/* Hamburger icon */}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '5px', width: '22px' }}>
+              <div style={{ height: '3px', background: '#333', borderRadius: '2px' }}></div>
+              <div style={{ height: '3px', background: '#333', borderRadius: '2px' }}></div>
+              <div style={{ height: '3px', background: '#333', borderRadius: '2px' }}></div>
+            </div>
+          </div>
+          {showDropdown && (
+            <div style={{ position: 'absolute', top: '40px', right: 0, background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', borderRadius: '6px', zIndex: 10 }}>
+              <div
+                style={{ padding: '10px 20px', cursor: 'pointer', borderBottom: '1px solid #eee' }}
+                onClick={() => { setShowDropdown(false); navigate('/profile'); }}
+              >
+                Profile
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <div className="content">
@@ -103,23 +127,14 @@ function AdminDashboard() {
 
         {message && <p style={{ textAlign: 'center', color: 'red' }}>{message}</p>}
 
-        <div style={{ marginBottom: '40px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
-          <h3>Create New Staff Account</h3>
-          <form onSubmit={handleCreateStaff} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-            <input type="text" name="fullName" placeholder="Full Name" required />
-            <input type="email" name="email" placeholder="Email" required />
-            <input type="tel" name="phone" placeholder="Phone Number" required />
-            <select name="role" required>
-              <option value="">Select Role</option>
-              <option value="hod">HOD</option>
-              <option value="warden">Warden</option>
-              <option value="security">Security</option>
-            </select>
-            <input type="text" name="department" placeholder="Department (for HOD)" />
-            <input type="text" name="designation" placeholder="Designation" required />
-            <input type="password" name="password" placeholder="Password" required />
-            <button type="submit" className="btn btn-primary" style={{ gridColumn: 'span 2' }}>Create Account</button>
-          </form>
+        <div style={{ marginBottom: '40px', textAlign: 'center' }}>
+          <button
+            className="btn btn-primary"
+            style={{ padding: '12px 32px', fontSize: '1.1em', borderRadius: '6px' }}
+            onClick={() => navigate('/new-staff')}
+          >
+            + New Staff
+          </button>
         </div>
 
         <h3>All Users</h3>
