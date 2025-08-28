@@ -154,11 +154,12 @@ function Register() {
             <div className="form-group">
               <label>Branch/Department</label>
               <select name="branch" value={formData.branch} onChange={handleChange} required>
-                <option value="Computer Science">Computer Science</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Mechanical">Mechanical</option>
-                <option value="Civil">Civil</option>
-                <option value="Electrical">Electrical</option>
+                <option value="CSE">CSE</option>
+                <option value="ECE">ECE</option>
+                <option value="MECH">MECH</option>
+                <option value="CIVIL">CIVIL</option>
+                <option value="EEE">EEE</option>
+                <option value="AI">AI(ML & DS)</option>
               </select>
             </div>
           </div>
