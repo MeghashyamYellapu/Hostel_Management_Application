@@ -113,10 +113,20 @@ function AdminDashboard() {
           {showDropdown && (
             <div style={{ position: 'absolute', top: '40px', right: 0, background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', borderRadius: '6px', zIndex: 10 }}>
               <div
-                style={{ padding: '10px 20px', cursor: 'pointer', borderBottom: '1px solid #eee' }}
+                style={{ padding: '10px 20px', cursor: 'pointer', borderBottom: '1px solid #eee' , color: 'black'}}
                 onClick={() => { setShowDropdown(false); navigate('/profile'); }}
               >
                 Profile
+              </div>
+              <div
+                style={{ padding: '10px 20px', cursor: 'pointer',color: 'black' }}
+                onClick={() => {
+                  setShowDropdown(false);
+                  localStorage.removeItem('token');
+                  navigate('/login');
+                }}
+              >
+                Logout
               </div>
             </div>
           )}
