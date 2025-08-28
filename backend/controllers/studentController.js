@@ -4,6 +4,7 @@ const User = require('../models/User');
 const qrcode = require('qrcode');
 const { encrypt } = require('../utils/encryption');
 const notificationService = require('../services/notificationService');
+const AdmissionData = require('../models/AdmissionData'); // Import the new model
 
 const generateRequestId = async () => {
     let newRequestId;
@@ -78,15 +79,37 @@ exports.createLeaveRequest = async (req, res) => {
 
         if (approvers.length > 0) {
             const subject = `New Leave Request from ${student.fullName}`;
+            
+            const uploadedPhotoUrl = student.photo?.secure_url || 'https://via.placeholder.com/100?text=No+Photo';
+            
+            // --- FETCHING DATA FROM MONGODB ---
+            const officialData = await AdmissionData.findOne({ pin: student.pin });
+            const officialPhotoUrl = officialData?.admissionNumber ? `https://media.campx.in/cec/student-photos/${officialData.admissionNumber}.jpg` : 'https://via.placeholder.com/100?text=No+Photo';
+            // --- END FETCHING DATA ---
+            
             const formattedMessage = `
-                <h1>New Leave Request: ${subject}</h1>
-                <p><strong>Student Name:</strong> ${student.fullName}</p>
-                <p><strong>PIN Number:</strong> ${student.pin}</p>
-                <p><strong>Branch:</strong> ${student.branch}</p>
-                <p><strong>Leave Type:</strong> ${leaveType}</p>
-                <p><strong>Reason:</strong> ${reason}</p>
-                <p><strong>Duration:</strong> ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}</p>
-                <p>Awaiting your approval. Please log in to the portal to review the request.</p>
+                <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    <h2 style="color: #2563eb;">New Leave Request: ${subject}</h2>
+                    
+                    <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px;">
+                        <div style="text-align: center;">
+                            <img src="${uploadedPhotoUrl}" alt="Uploaded Photo" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">
+                            <p style="font-size: 12px; margin-top: 5px;">Student Uploaded Photo</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <img src="${officialPhotoUrl}" alt="Official Photo" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">
+                            <p style="font-size: 12px; margin-top: 5px;">Official Photo (PIN: ${student.pin})</p>
+                        </div>
+                    </div>
+                    
+                    <p><strong>Student Name:</strong> ${student.fullName}</p>
+                    <p><strong>PIN Number:</strong> ${student.pin}</p>
+                    <p><strong>Branch:</strong> ${student.branch}</p>
+                    <p><strong>Leave Type:</strong> ${leaveType}</p>
+                    <p><strong>Reason:</strong> ${reason}</p>
+                    <p><strong>Duration:</strong> ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}</p>
+                    <p>Awaiting your approval. Please log in to the portal to review the request.</p>
+                </div>
             `;
 
             for (const approver of approvers) {
@@ -110,7 +133,7 @@ exports.getStudentLeaveRequests = async (req, res) => {
     try {
         const studentId = req.user.id;
         const requests = await LeaveRequest.find({ student: studentId })
-            .populate('student', 'fullName branch year')
+            .populate('student', 'fullName branch year photo') // Corrected populate to include photo
             .sort({ createdAt: -1 });
         res.status(200).json(requests);
     } catch (err) {
