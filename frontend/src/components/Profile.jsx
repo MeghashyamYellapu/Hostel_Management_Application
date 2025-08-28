@@ -13,7 +13,9 @@ function Profile() {
         pin: '',
         department: '',
         designation: '',
+        photo: null
     });
+    const [photoPreviewUrl, setPhotoPreviewUrl] = useState(null);
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -42,7 +44,9 @@ function Profile() {
                             pin: data.user.pin || '',
                             department: data.user.department || '',
                             designation: data.user.designation || '',
+                            photo: null
                         });
+                        setPhotoPreviewUrl(data.user.photoUrl || null); // If your backend returns photoUrl
                     } else {
                         setMessage(`❌ ${data.message || 'Failed to fetch profile.'}`);
                     }
@@ -57,7 +61,13 @@ function Profile() {
     }, []);
 
     const handleProfileChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        if (e.target.name === 'photo') {
+            const file = e.target.files[0];
+            setFormData({ ...formData, photo: file });
+            setPhotoPreviewUrl(file ? URL.createObjectURL(file) : null);
+        } else {
+            setFormData({ ...formData, [e.target.name]: e.target.value });
+        }
     };
 
     const handlePasswordChange = (e) => {
@@ -69,18 +79,21 @@ function Profile() {
         setMessage('');
         try {
             const token = localStorage.getItem('token');
+            const form = new FormData();
+            Object.entries(formData).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) form.append(key, value);
+            });
             const res = await fetch('http://localhost:5000/api/auth/profile', {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(formData)
+                body: form
             });
             const data = await res.json();
             if (res.ok) {
                 setMessage('✅ Profile updated successfully!');
-                const updatedUser = { ...user, ...formData };
+                const updatedUser = { ...user, ...formData, photoUrl: data.user.photoUrl };
                 localStorage.setItem('user', JSON.stringify(updatedUser));
                 setTimeout(() => window.location.reload(), 1500);
             } else {
@@ -132,7 +145,30 @@ function Profile() {
                 <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>Update Profile</h2>
                 {message && <p style={{ textAlign: 'center', color: message.startsWith('✅') ? 'green' : 'red' }}>{message}</p>}
 
-                <form style={{ maxWidth: '600px', margin: '0 auto' }} onSubmit={handleProfileSubmit}>
+                <form style={{ maxWidth: '600px', margin: '0 auto' }} onSubmit={handleProfileSubmit} encType="multipart/form-data">
+                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                        <label htmlFor="photo" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {photoPreviewUrl ? (
+                                <img
+                                    src={photoPreviewUrl}
+                                    alt="Profile Preview"
+                                    style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #ccc' }}
+                                />
+                            ) : (
+                                <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #ccc' }}>
+                                    <span style={{ color: '#888' }}>Click to add/change photo</span>
+                                </div>
+                            )}
+                        </label>
+                        <input
+                            type="file"
+                            id="photo"
+                            name="photo"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={handleProfileChange}
+                        />
+                    </div>
                     <div className="form-group">
                         <label>Full Name</label>
                         <input type="text" name="fullName" value={formData.fullName} onChange={handleProfileChange} required />
