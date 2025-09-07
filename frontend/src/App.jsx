@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { NotificationProvider } from './contexts/NotificationContext';
 import Home from './components/Home';
@@ -16,6 +16,12 @@ import Profile from './components/Profile';
 import './styles.css';
 
 function App() {
+  useEffect(() => {
+    // Initialize theme from localStorage or default to 'dark'
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }, []);
+
   return (
     <NotificationProvider>
       <Router>

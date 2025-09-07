@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Notifications from './Notifications'; // New component
+import ThemeToggle from '../ThemeToggle';
 import '../../styles.css';
 
 const Header = ({ title }) => {
@@ -34,9 +35,16 @@ const Header = ({ title }) => {
   }, []);
 
   return (
-    <div className="header">
+    <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <div className="logo">🏠 {title}</div>
-      <div className="user-info" style={{ position: 'relative' }}>
+      <div className="user-info" style={{ 
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        marginRight: '20px'
+      }}>
+        <ThemeToggle />
         {user && user.role !== 'student' && <Notifications />}
         <span onClick={() => setShowProfileMenu(!showProfileMenu)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
           {user ? `Welcome, ${user.fullName}` : 'Guest'}

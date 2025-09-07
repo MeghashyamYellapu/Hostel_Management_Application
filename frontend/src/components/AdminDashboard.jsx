@@ -93,33 +93,55 @@ function AdminDashboard() {
 
   return (
     <div className="screen active" id="admin-dashboard">
-      <div className="header">
+      <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem' }}>
         <div className="logo">🏠 Admin Portal</div>
-        <div className="user-info" style={{ position: 'relative' }}>
+        <div className="user-info" style={{ 
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          marginLeft: 'auto' // This pushes the element to the right
+        }}>
           <span>Super Admin</span>
           <div
             className="adminProfile"
-            style={{ cursor: 'pointer', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ 
+              cursor: 'pointer',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginLeft: '10px'
+            }}
             onClick={() => setShowDropdown((prev) => !prev)}
             title="Menu"
           >
-            {/* Hamburger icon */}
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '5px', width: '22px' }}>
-              <div style={{ height: '3px', background: '#333', borderRadius: '2px' }}></div>
-              <div style={{ height: '3px', background: '#333', borderRadius: '2px' }}></div>
-              <div style={{ height: '3px', background: '#333', borderRadius: '2px' }}></div>
+              <div style={{ height: '3px', background: 'currentColor', borderRadius: '2px' }}></div>
+              <div style={{ height: '3px', background: 'currentColor', borderRadius: '2px' }}></div>
+              <div style={{ height: '3px', background: 'currentColor', borderRadius: '2px' }}></div>
             </div>
           </div>
           {showDropdown && (
-            <div style={{ position: 'absolute', top: '40px', right: 0, background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', borderRadius: '6px', zIndex: 10 }}>
+            <div style={{ 
+              position: 'absolute',
+              top: '40px',
+              right: 0,
+              background: 'var(--bg-primary)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              borderRadius: '6px',
+              zIndex: 10,
+              minWidth: '150px'
+            }}>
               <div
-                style={{ padding: '10px 20px', cursor: 'pointer', borderBottom: '1px solid #eee' , color: 'black'}}
+                style={{ padding: '10px 20px', cursor: 'pointer', borderBottom: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                 onClick={() => { setShowDropdown(false); navigate('/profile'); }}
               >
                 Profile
               </div>
               <div
-                style={{ padding: '10px 20px', cursor: 'pointer',color: 'black' }}
+                style={{ padding: '10px 20px', cursor: 'pointer', color: 'var(--text-primary)' }}
                 onClick={() => {
                   setShowDropdown(false);
                   localStorage.removeItem('token');

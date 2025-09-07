@@ -108,48 +108,57 @@ function Login() {
 
   return (
     <div className="screen active" id="login">
-      <div className="header">
-        <div className="logo">🏠 Hostel Gate Pass System</div>
+      <div className="header" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+        <div className="logo" style={{ marginLeft: '20px' }}>🏠 Hostel Gate Pass System</div>
       </div>
-      <div className="content">
-        <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>Login to Your Account</h2>
-        {message && <p style={{ textAlign: 'center', color: 'red' }}>{message}</p>}
-        <form style={{ maxWidth: '400px', margin: '0 auto' }} onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email</label>
-            <input type="email" name="email" onChange={handleChange} placeholder="Enter your email" required />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input type="password" name="password" onChange={handleChange} placeholder="Enter your password" required />
-            <div style={{ textAlign: 'right', marginTop: '5px' }}>
-              <span
-                style={{ color: '#4facfe', cursor: 'pointer', fontSize: '0.95em', textDecoration: 'underline' }}
-                onClick={() => setShowForgot(true)}
-              >
-                Forgot Password?
-              </span>
+      <div className="content" style={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: 'calc(100vh - 64px)', // Subtracting header height
+        padding: '2rem'
+      }}>
+        <div style={{ width: '100%', maxWidth: '400px' }}>
+          <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>Login to Your Account</h2>
+          {message && <p style={{ textAlign: 'center', color: 'red' }}>{message}</p>}
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label className="form-headly">Email</label>
+              <input type="email" name="email" onChange={handleChange} placeholder="Enter your email" required />
             </div>
-          </div>
-          <div className="form-group">
-            <label>Login As</label>
-            <select name="role" onChange={handleChange}>
-              <option value="student">Student</option>
-              <option value="hod">HOD</option>
-              <option value="warden">Warden</option>
-              <option value="security">Security</option>
-              <option value="Admin">Admin</option>
-            </select>
-          </div>
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginBottom: '15px' }}>
-            Login
-          </button>
-          <div style={{ textAlign: 'center' }}>
-            <Link to="/register" style={{ color: '#4facfe', cursor: 'pointer', textDecoration: 'none' }}>
-              Don't have an account? Register here
-            </Link>
-          </div>
-        </form>
+            <div className="form-group">
+              <label className="form-headly">Password</label>
+              <input type="password" name="password" onChange={handleChange} placeholder="Enter your password" required />
+              <div style={{ textAlign: 'right', marginTop: '5px' }}>
+                <span
+                  style={{ color: '#4facfe', cursor: 'pointer', fontSize: '0.95em', textDecoration: 'underline' }}
+                  onClick={() => setShowForgot(true)}
+                >
+                  Forgot Password?
+                </span>
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Login As</label>
+              <select name="role" onChange={handleChange}>
+                <option value="student">Student</option>
+                <option value="hod">HOD</option>
+                <option value="warden">Warden</option>
+                <option value="security">Security</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginBottom: '15px' }}>
+              Login
+            </button>
+            <div style={{ textAlign: 'center' }}>
+              <Link to="/register" style={{ color: '#4facfe', cursor: 'pointer', textDecoration: 'none' }}>
+                Don't have an account? Register here
+              </Link>
+            </div>
+          </form>
+        </div>
 
         {showForgot && (
           <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
