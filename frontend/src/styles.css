@@ -296,7 +296,6 @@ body {
 }
 
 .detail-item {
-  background: var(--background);
   font-size: 14px;
   margin-bottom: 0.5rem;
 }
@@ -755,6 +754,12 @@ body {
   width: 100%;
 }
 
+#login .form-group select {
+  color: black;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
 #login{
   display: flex;
   flex-direction: column;
@@ -848,7 +853,7 @@ body {
 }
 
 .form-group label {
-  color: var(--text-primary);
+  color: rgb(243, 237, 237);
   font-weight: 500;
   margin-bottom: 8px;
 }
@@ -856,9 +861,9 @@ body {
 .form-group input,
 .form-group select,
 .form-group textarea {
-  background: var(--background);
+  background: white;
   border: 1px solid #e0e0e0;
-  color: var(--text-primary);
+  color: black;
   padding: 8px 12px;
   border-radius: 4px;
 }
@@ -931,7 +936,7 @@ body {
 .screen#new-staff .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: black;
+  color: black3;
   font-weight: 500;
 }
 
