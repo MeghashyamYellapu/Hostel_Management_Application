@@ -853,9 +853,13 @@ body {
 }
 
 .form-group label {
-  color: rgb(243, 237, 237);
+  color: white;
   font-weight: 500;
   margin-bottom: 8px;
+}
+
+#form-color label{
+  color: var(--text-primary);
 }
 
 .form-group input,

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Header from './common/Header'; // Import the common Header
 import '../styles.css';
 
+const API_BASE = process.env.REACT_APP_API_BASE;
+
 function NewRequest() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -24,7 +26,7 @@ function NewRequest() {
     setMessage('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/student/requests', {
+      const res = await fetch(`${API_BASE}/student/requests`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,7 +52,7 @@ function NewRequest() {
       <div className="content">
         <form style={{ maxWidth: '800px', margin: '0 auto' }} onSubmit={handleSubmit}>
           {message && <p style={{ textAlign: 'center', color: message.startsWith('❌') ? 'red' : 'green' }}>{message}</p>}
-          <div className="form-group">
+          <div className="form-group" id="form-color">
             <label>Leave Type</label>
             <select
               id="leaveType"
@@ -65,7 +67,7 @@ function NewRequest() {
             </select>
           </div>
 
-          <div className="form-group">
+          <div className="form-group" id="form-color">
             <label>Reason for Leave</label>
             <textarea
               rows="4"
@@ -78,22 +80,22 @@ function NewRequest() {
           </div>
 
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group" id="form-color">
               <label>Start Date</label>
               <input type="date" name="startDate" value={formData.startDate} onChange={handleChange} required />
             </div>
-            <div className="form-group">
+            <div className="form-group" id="form-color">
               <label>End Date</label>
               <input type="date" name="endDate" value={formData.endDate} onChange={handleChange} required />
             </div>
           </div>
 
-          <div className="form-group">
+          <div className="form-group" id="form-color">
             <label>Emergency Contact (if different from registered)</label>
             <input type="tel" name="emergencyContact" value={formData.emergencyContact} onChange={handleChange} placeholder="Emergency contact number" />
           </div>
 
-          <div className="form-group">
+          <div className="form-group" id="form-color">
             <label>Additional Comments</label>
             <textarea rows="3" name="additionalComments" value={formData.additionalComments} onChange={handleChange} placeholder="Any additional information"></textarea>
           </div>

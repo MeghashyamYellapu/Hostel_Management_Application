@@ -5,6 +5,8 @@ import Header from './common/Header';
 import '../styles.css';
 import { admissionData } from '../data/admissionData';
 
+const API_BASE = process.env.REACT_APP_API_BASE;
+
 function GatePass() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -34,7 +36,7 @@ function GatePass() {
     const fetchGatePass = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`http://localhost:5000/api/student/gate-pass/${id}`, {
+        const res = await fetch(`${API_BASE}/student/gate-pass/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles.css';
 
+const API_BASE = process.env.REACT_APP_API_BASE;
+
 function NewStaff() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -25,7 +27,7 @@ function NewStaff() {
     setMessage('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/admin/staff', {
+      const res = await fetch(`${API_BASE}/admin/staff`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
