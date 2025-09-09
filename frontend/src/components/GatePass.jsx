@@ -61,33 +61,28 @@ function GatePass() {
   if (loading) return <div className="screen active">Loading Gate Pass...</div>;
   if (error) return <div className="screen active" style={{ color: 'red', textAlign: 'center' }}>{error}</div>;
   if (!gatePass) return <div className="screen active">No gate pass data found.</div>;
-  
+
   const formatDate = (date) => new Date(date).toLocaleDateString();
   const formatTime = (date) => new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const getSecondPhotoUrl = (pin) => {
     const admissionNumber = admissionData[pin]?.admissionNumber;
     if (admissionNumber) {
-        return `https://media.campx.in/cec/student-photos/${admissionNumber}.jpg`;
+      return `https://media.campx.in/cec/student-photos/${admissionNumber}.jpg`;
     }
     return '';
   };
-  
+
   const getSecondPhotoName = (pin) => {
     return admissionData[pin]?.name || 'N/A';
   };
-  
+
   const getSecondPhotoBranch = (pin) => {
     return admissionData[pin]?.branch || 'N/A';
   };
 
   return (
     <div className="gatepass-container">
-      <div className="watermark-grid">
-        {Array.from({ length: 50 }).map((_, i) => (
-          <span key={i}>{watermarkText}</span>
-        ))}
-      </div>
       <div className="screen active" id="gate-pass">
         <Header title="Official Gate Pass" />
         <div className="content">
@@ -95,28 +90,64 @@ function GatePass() {
             <h2>🏫 COLLEGE HOSTEL</h2>
             <h3>OFFICIAL GATE PASS</h3>
 
-            <div className="gate-pass-header" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px', gap: '30px' }}>
-                <div style={{ textAlign: 'center' }}>
-                    <div className="profile-pic-wrapper" style={{ width: '100px', height: '100px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff' }}>
-                        <img src={gatePass.student.photo?.secure_url} alt="User Uploaded" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                    <div style={{ fontWeight: 'bold', fontSize: '14px', marginTop: '5px' }}>User Uploaded Photo</div>
-                    <small>{gatePass.student.fullName}</small>
+            <div className="gate-pass-header" style={{
+              display: 'flex',
+              justifyContent: 'center', // Changed to center
+              alignItems: 'center',
+              marginBottom: '20px',
+              padding: '0 350px',
+              gap: '30px' // Added specific gap between elements
+            }}>
+              {/* User Uploaded Photo - Left Side */}
+              <div className="photo-section" style={{ flex: '0 0 auto' }}>
+                <div className="profile-pic-wrapper" style={{
+                  width: '100px',
+                  height: '100px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  border: '2px solid #fff',
+                  margin: '0 auto'
+                }}>
+                  <img
+                    src={gatePass.student.photo?.secure_url}
+                    alt="User Uploaded"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 </div>
-                <div className="qr-code">
-                    {gatePass.encryptedData && (
-                        <QRCodeCanvas value={gatePass.encryptedData} size={120} />
-                    )}
+                <div style={{ textAlign: 'center', marginTop: '5px', width: '100px' }}> {/* Fixed width */}
+                  <div style={{ fontWeight: 'bold', fontSize: '12px' }}>User Photo</div>
+                  <small style={{ fontSize: '11px' }}>{gatePass.student.fullName}</small>
                 </div>
-                <div style={{ textAlign: 'center' }}>
-                    <div className="profile-pic-wrapper" style={{ width: '100px', height: '100px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff' }}>
-                        <img src={getSecondPhotoUrl(gatePass.student.pin)} alt="Official" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                    <div style={{ fontWeight: 'bold', fontSize: '14px', marginTop: '5px' }}>Official Photo</div>
-                    <small>{getSecondPhotoName(gatePass.student.pin)}</small>
-                    <br />
-                    <small>{getSecondPhotoBranch(gatePass.student.pin)}</small>
+              </div>
+
+              {/* QR Code - Center */}
+              <div className="qr-code" style={{ flex: '0 0 auto' }}>
+                {gatePass.encryptedData && (
+                  <QRCodeCanvas value={gatePass.encryptedData} size={120} />
+                )}
+              </div>
+
+              {/* Official Photo - Right Side */}
+              <div className="photo-section" style={{ flex: '0 0 auto' }}>
+                <div className="profile-pic-wrapper" style={{
+                  width: '100px',
+                  height: '100px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  border: '2px solid #fff',
+                  margin: '0 auto'
+                }}>
+                  <img
+                    src={getSecondPhotoUrl(gatePass.student.pin)}
+                    alt="Official"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 </div>
+                <div style={{ textAlign: 'center', marginTop: '5px', width: '100px' }}> {/* Fixed width */}
+                  <div style={{ fontWeight: 'bold', fontSize: '12px' }}>Official Photo</div>
+                  <small style={{ fontSize: '11px' }}>{getSecondPhotoName(gatePass.student.pin)}</small>
+                </div>
+              </div>
             </div>
 
             <div className="pass-details">
@@ -138,7 +169,7 @@ function GatePass() {
                 </div>
               </div>
             </div>
-            
+
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr 1fr',
@@ -147,17 +178,17 @@ function GatePass() {
               fontSize: '14px',
             }}>
               <div>
-                <strong>HOD Approval</strong><br /> 
+                <strong>HOD Approval</strong><br />
                 {gatePass.leaveRequest.hodApproval?.status === 'approved' ? '✅' : '❌'} {gatePass.leaveRequest.hodApproval?.approvedBy?.fullName || 'Pending'}
                 <br /> <small>{gatePass.leaveRequest.hodApproval?.timestamp ? formatDate(gatePass.leaveRequest.hodApproval.timestamp) : 'N/A'}</small>
               </div>
               <div>
-                <strong>Warden Approval</strong><br /> 
+                <strong>Warden Approval</strong><br />
                 {gatePass.leaveRequest.wardenApproval?.status === 'approved' ? '✅' : '❌'} {gatePass.leaveRequest.wardenApproval?.approvedBy?.fullName || 'Pending'}
                 <br /> <small>{gatePass.leaveRequest.wardenApproval?.timestamp ? formatDate(gatePass.leaveRequest.wardenApproval.timestamp) : 'N/A'}</small>
               </div>
               <div>
-                <strong>Security Clearance</strong><br /> 
+                <strong>Security Clearance</strong><br />
                 {gatePass.securityOfficer?.exit ? '✅' : 'Pending'} {gatePass.securityOfficer?.exit?.fullName || 'Gate 1'}
                 <br /> <small>{gatePass.securityOfficer?.exit ? formatDate(gatePass.exitTime) : 'N/A'}</small>
               </div>
@@ -190,6 +221,11 @@ function GatePass() {
               ← Back to Dashboard
             </button>
           </div>
+           <div className="watermark-grid">
+        {Array.from({ length: 20 }).map((_, i) => (
+          <span key={i}>{watermarkText}</span>
+        ))}
+      </div>
         </div>
       </div>
     </div>
