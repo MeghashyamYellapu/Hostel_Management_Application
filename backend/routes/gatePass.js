@@ -5,7 +5,7 @@ const { protect } = require('../middleware/auth');
 
 // @desc    Get a gate pass by ID for a specific student
 // @route   GET /api/student/gate-pass/:id
-// @access  Private (student only)
+// @access  Private (student only) ss
 router.get('/:id', protect, async (req, res) => {
     try {
         const { id } = req.params;
