@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles.css';
 
+const API_BASE = process.env.REACT_APP_API_BASE;
+
 function NewStaff() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     phone: '',
     role: '',
     department: '',
-    designation: '',
     password: ''
   });
   const [message, setMessage] = useState('');
@@ -24,7 +27,7 @@ function NewStaff() {
     setMessage('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/admin/staff', {
+      const res = await fetch(`${API_BASE}/admin/staff`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,7 +44,6 @@ function NewStaff() {
           phone: '',
           role: '',
           department: '',
-          designation: '',
           password: ''
         });
       } else {
@@ -55,8 +57,19 @@ function NewStaff() {
 
   return (
     <div className="screen active" id="new-staff">
-      <div className="header">
-        <div className="logo">👤 Add New Staff</div>
+      <div className="header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px' }}>
+        {/* Back Arrow */}
+        <span
+          style={{ cursor: 'pointer', fontSize: '1.8rem' }}
+          title="Back to Admin Dashboard"
+          onClick={() => navigate('/admin-dashboard')}
+        >
+          &#8592;
+        </span>
+        {/* Top Right: Add new staff name */}
+        <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
+          Add New Staff
+        </div>
       </div>
       <div className="content">
         <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>Create New Staff Account</h2>
@@ -85,11 +98,21 @@ function NewStaff() {
           </div>
           <div className="form-group">
             <label>Department (for HOD)</label>
-            <input type="text" name="department" value={formData.department} onChange={handleChange} />
-          </div>
-          <div className="form-group">
-            <label>Designation</label>
-            <input type="text" name="designation" value={formData.designation} onChange={handleChange} required />
+            <select
+              name="department"
+              value={formData.department}
+              onChange={handleChange}
+              disabled={formData.role !== 'hod'}
+              required={formData.role === 'hod'}
+            >
+              <option value="">Select Department</option>
+              <option value="CSE">Computer Science</option>
+              <option value="ECE">ECE</option>
+              <option value="CIVIL">CIVIL</option>
+              <option value="MECH">MECH</option>
+              <option value="EEE">EEE</option>
+              <option value="AI">AI</option>
+            </select>
           </div>
           <div className="form-group">
             <label>Password</label>

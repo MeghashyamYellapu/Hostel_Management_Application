@@ -1,11 +1,7 @@
 const Notification = require('../models/Notification');
 const User = require('../models/User');
-// const nodemailer = require('nodemailer'); // For email notifications
-// const twilio = require('twilio'); // For SMS/WhatsApp
-
-// TODO: Configure your email and Twilio services
-// const transporter = nodemailer.createTransport({ ... });
-// const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const { getIo } = require('../config/socketio');
+const { sendEmail } = require('../services/emailService');
 
 exports.sendNotification = async (recipientId, title, message, type, data, priority = 'medium') => {
     try {
@@ -26,25 +22,18 @@ exports.sendNotification = async (recipientId, title, message, type, data, prior
         await newNotification.save();
 
         // Send via in-app (Socket.io)
-        // const io = require('../config/socketio').getIo();
-        // io.to(recipientId.toString()).emit('new-notification', newNotification);
-        
-        // TODO: Implement other channels (email, sms, whatsapp)
-        // if (recipient.email && newNotification.channels.email) {
-        //     const mailOptions = { ... };
-        //     await transporter.sendMail(mailOptions);
-        //     newNotification.channels.email.sent = true;
-        //     newNotification.channels.email.sentAt = new Date();
-        // }
-        
-        // if (recipient.phone && newNotification.channels.sms) {
-        //     await twilioClient.messages.create({ ... });
-        //     newNotification.channels.sms.sent = true;
-        //     newNotification.channels.sms.sentAt = new Date();
-        // }
+        const io = getIo();
+        if (io) {
+            io.to(recipientId.toString()).emit('new-notification', newNotification);
+        }
 
-        await newNotification.save();
-        
+        // Send via email
+        const formattedMessage = `
+            <h1>${title}</h1>
+            <p>${message}</p>
+        `;
+        await sendEmail(recipient.email, title, formattedMessage);
+
     } catch (err) {
         console.error('Error sending notification:', err);
     }

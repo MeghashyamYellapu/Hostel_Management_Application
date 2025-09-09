@@ -4,6 +4,8 @@ import Header from './common/Header';
 import QRScanner from './QRScanner';
 import '../styles.css';
 
+const API_BASE = process.env.REACT_APP_API_BASE;
+
 function SecurityDashboard() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
@@ -17,7 +19,7 @@ function SecurityDashboard() {
     const fetchRequests = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:5000/api/security/requests', {
+        const res = await fetch(`${API_BASE}/security/requests`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -34,7 +36,7 @@ function SecurityDashboard() {
     const fetchActivePasses = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:5000/api/security/passes', {
+        const res = await fetch(`${API_BASE}/security/passes`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -53,7 +55,7 @@ function SecurityDashboard() {
   const handleGeneratePass = async (requestId) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/security/requests/${requestId}/generate`, {
+      const res = await fetch(`${API_BASE}/security/requests/${requestId}/generate`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -79,7 +81,7 @@ function SecurityDashboard() {
     setScanResult('Scanning...');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/security/scan', {
+      const res = await fetch(`${API_BASE}/security/scan`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,14 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import '../styles.css';
 import { Link } from 'react-router-dom';
+import ThemeToggle from './ThemeToggle';
 
 function Home({ navigate }) {
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-
-  const toggleProfileMenu = () => {
-    setShowProfileMenu((prev) => !prev);
-  };
-
   return (
     <div className="home-container">
       {/* Header */}
@@ -16,42 +11,15 @@ function Home({ navigate }) {
         <div className="home-header-content">
           <div className="home-header-left">
             <div className="home-logo">Hostel Management</div>
-            <div className="home-nav">
-              <Link to="/" className="home-nav-link">Home</Link>
-              <Link to="/about" className="home-nav-link">About</Link>
-              <Link to="/contact" className="home-nav-link">Contact</Link>
-            </div>
           </div>
-          <div className="home-header-right">
+          <div className="home-header-right" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <ThemeToggle />
             <Link to="/login" className="home-btn-outline">
               Login
             </Link>
             <Link to="/register" className="home-btn-primary">
               Register
             </Link>
-            <div className="profile-menu-wrapper">
-              <button
-                className="home-btn-secondary"
-                onClick={toggleProfileMenu}
-              >
-                Profile ▾
-              </button>
-              {showProfileMenu && (
-                <div className="profile-dropdown-menu">
-                  <div
-                    onClick={() => navigate('student-dashboard')}
-                    className="profile-dropdown-item"
-                  >
-                    <div className="profile-dropdown-content">
-                      <svg className="profile-dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                      </svg>
-                      <span>Dashboard</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </div>
@@ -136,7 +104,7 @@ function Home({ navigate }) {
       {/* Footer */}
       <footer className="home-footer">
         <div className="home-footer-content">
-          <p>&copy; 2024 Hostel Gate Pass Management System. All rights reserved.</p>
+          <p>&copy; 2025 Hostel Gate Pass Management System. All rights reserved.</p>
         </div>
       </footer>
     </div>

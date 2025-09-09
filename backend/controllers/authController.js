@@ -2,6 +2,7 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { sendEmail } = require('../services/emailService');// Add this import
 const crypto = require('crypto');
+const cloudinary = require('../config/cloudinary');
 
 const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, {
@@ -19,8 +20,8 @@ exports.register = async (req, res) => {
     let photo = {};
     if (req.file) {
         photo = {
-            public_id: req.file.public_id,
-            secure_url: req.file.secure_url
+            public_id: req.file.filename,
+            secure_url: req.file.path
         };
     } else {
         return res.status(400).json({ error: 'Profile picture is required.' });
@@ -91,42 +92,60 @@ exports.getProfile = async (req, res) => {
 };
 
 exports.updateProfile = async (req, res) => {
-    const { fullName, phone, department, designation, email, pin } = req.body;
-
     try {
         const user = await User.findById(req.user.id);
-
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Check for duplicate email
-        if (email && email !== user.email) {
-            const emailExists = await User.findOne({ email });
-            if (emailExists) {
-                return res.status(400).json({ message: 'This email is already in use.' });
+        // Handle photo upload if provided
+        if (req.file) {
+            // Delete old photo from Cloudinary if it exists
+            if (user.photo && user.photo.public_id) {
+                try {
+                    await cloudinary.uploader.destroy(user.photo.public_id);
+                } catch (error) {
+                    console.error('Error deleting old photo:', error);
+                }
             }
-            user.email = email;
+            
+            // Update photo with new upload
+            user.photo = {
+                public_id: req.file.filename,
+                secure_url: req.file.path
+            };
         }
 
-        // --- CONVERT PIN TO UPPERCASE ---
-        const uppercasePin = pin ? pin.toUpperCase() : user.pin;
-        if (pin && uppercasePin !== user.pin) {
-            const pinExists = await User.findOne({ pin: uppercasePin });
-            if (pinExists) {
-                return res.status(400).json({ message: 'This PIN number is already in use.' });
+        // Update other fields from req.body (FormData fields)
+        if (req.body.fullName) user.fullName = req.body.fullName;
+        if (req.body.phone) user.phone = req.body.phone;
+        if (req.body.email) {
+            // Check for duplicate email
+            if (req.body.email !== user.email) {
+                const emailExists = await User.findOne({ email: req.body.email });
+                if (emailExists) {
+                    return res.status(400).json({ message: 'This email is already in use.' });
+                }
+                user.email = req.body.email;
             }
-            user.pin = uppercasePin;
         }
-
-        user.fullName = fullName || user.fullName;
-        user.phone = phone || user.phone;
+        if (req.body.pin) {
+            // Check for duplicate PIN
+            const uppercasePin = req.body.pin.toUpperCase();
+            if (uppercasePin !== user.pin) {
+                const pinExists = await User.findOne({ pin: uppercasePin });
+                if (pinExists) {
+                    return res.status(400).json({ message: 'This PIN number is already in use.' });
+                }
+                user.pin = uppercasePin;
+            }
+        }
         
         if (user.role.toLowerCase() === 'hod') {
-            user.department = department || user.department;
-            user.designation = designation || user.designation;
+            if (req.body.department) user.department = req.body.department;
+            if (req.body.designation) user.designation = req.body.designation;
         } else if (user.role.toLowerCase() === 'warden' || user.role.toLowerCase() === 'security' || user.role.toLowerCase() === 'admin') {
-            user.designation = designation || user.designation;
+            if (req.body.designation) user.designation = req.body.designation;
         }
 
         await user.save();
@@ -136,6 +155,7 @@ exports.updateProfile = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
 
 exports.updatePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;

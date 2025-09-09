@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles.css';
 
+const API_BASE = process.env.REACT_APP_API_BASE;
+
 function Login() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -24,31 +26,46 @@ function Login() {
     e.preventDefault();
     setMessage('');
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(formData)
       });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Login failed');
+      }
+
       const data = await res.json();
-      if (res.ok) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        if (data.user.role === 'student') {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      switch(data.user.role.toLowerCase()) {
+        case 'student':
           navigate('/student-dashboard');
-        } else if (data.user.role === 'hod') {
+          break;
+        case 'hod':
           navigate('/hod-dashboard');
-        } else if (data.user.role === 'warden') {
+          break;
+        case 'warden':
           navigate('/warden-dashboard');
-        } else if (data.user.role === 'security') {
+          break;
+        case 'security':
           navigate('/security-dashboard');
-        } else if (data.user.role === 'Admin') {
+          break;
+        case 'admin':
           navigate('/admin-dashboard');
-        }
-      } else {
-        setMessage(`❌ ${data.error}`);
+          break;
+        default:
+          throw new Error('Invalid user role');
       }
     } catch (err) {
-      setMessage('❌ Server error. Please try again.');
+      console.error('Login error:', err);
+      setMessage(`❌ ${err.message || 'Server error. Please try again.'}`);
     }
   };
 
@@ -56,24 +73,27 @@ function Login() {
     e.preventDefault();
     setForgotMsg('');
     if (!forgotEmail) {
-      setForgotMsg('Please enter your email.');
+      setForgotMsg('❌ Please enter your email.');
       return;
     }
     try {
-      const res = await fetch('http://localhost:5000/api/auth/forgot-password', {
+      const res = await fetch(`${API_BASE}/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail })
       });
-      const data = await res.json();
-      if (res.ok) {
-        setForgotMsg('✅ Password reset OTP sent to your email.');
-        setOtpStage(true);
-      } else {
-        setForgotMsg(`❌ ${data.error || 'Failed to send reset OTP.'}`);
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to send reset OTP');
       }
+
+      const data = await res.json();
+      setForgotMsg('✅ Password reset OTP sent to your email.');
+      setOtpStage(true);
     } catch (err) {
-      setForgotMsg('❌ Server error. Please try again.');
+      console.error('Forgot password error:', err);
+      setForgotMsg(`❌ ${err.message || 'Server error. Please try again.'}`);
     }
   };
 
@@ -85,7 +105,7 @@ function Login() {
       return;
     }
     try {
-      const res = await fetch('http://localhost:5000/api/auth/reset-password', {
+      const res = await fetch(`${API_BASE}/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -94,62 +114,74 @@ function Login() {
           newPassword: otpData.newPassword,
         })
       });
-      const data = await res.json();
-      if (res.ok) {
-        setForgotMsg('✅ Password has been reset successfully!');
-        setTimeout(() => setShowForgot(false), 2000);
-      } else {
-        setForgotMsg(`❌ ${data.error || 'Failed to reset password.'}`);
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to reset password');
       }
+
+      const data = await res.json();
+      setForgotMsg('✅ Password has been reset successfully!');
+      setTimeout(() => setShowForgot(false), 2000);
     } catch (err) {
-      setForgotMsg('❌ Server error. Please try again.');
+      console.error('Reset password error:', err);
+      setForgotMsg(`❌ ${err.message || 'Server error. Please try again.'}`);
     }
   };
 
   return (
     <div className="screen active" id="login">
-      <div className="header">
-        <div className="logo">🏠 Hostel Gate Pass System</div>
+      <div className="header" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+        <div className="logo" style={{ marginLeft: '20px' }}>🏠 Hostel Gate Pass System</div>
       </div>
-      <div className="content">
-        <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>Login to Your Account</h2>
-        {message && <p style={{ textAlign: 'center', color: 'red' }}>{message}</p>}
-        <form style={{ maxWidth: '400px', margin: '0 auto' }} onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email</label>
-            <input type="email" name="email" onChange={handleChange} placeholder="Enter your email" required />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input type="password" name="password" onChange={handleChange} placeholder="Enter your password" required />
-            <div style={{ textAlign: 'right', marginTop: '5px' }}>
-              <span
-                style={{ color: '#4facfe', cursor: 'pointer', fontSize: '0.95em', textDecoration: 'underline' }}
-                onClick={() => setShowForgot(true)}
-              >
-                Forgot Password?
-              </span>
+      <div className="content" style={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: 'calc(100vh - 64px)', // Subtracting header height
+        padding: '2rem'
+      }}>
+        <div style={{ width: '100%', maxWidth: '400px' }}>
+          <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>Login to Your Account</h2>
+          {message && <p style={{ textAlign: 'center', color: 'red' }}>{message}</p>}
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label className="form-headly">Email</label>
+              <input type="email" name="email" onChange={handleChange} placeholder="Enter your email" required />
             </div>
-          </div>
-          <div className="form-group">
-            <label>Login As</label>
-            <select name="role" onChange={handleChange}>
-              <option value="student">Student</option>
-              <option value="hod">HOD</option>
-              <option value="warden">Warden</option>
-              <option value="security">Security</option>
-              <option value="Admin">Admin</option>
-            </select>
-          </div>
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginBottom: '15px' }}>
-            Login
-          </button>
-          <div style={{ textAlign: 'center' }}>
-            <Link to="/register" style={{ color: '#4facfe', cursor: 'pointer', textDecoration: 'none' }}>
-              Don't have an account? Register here
-            </Link>
-          </div>
-        </form>
+            <div className="form-group">
+              <label className="form-headly">Password</label>
+              <input type="password" name="password" onChange={handleChange} placeholder="Enter your password" required />
+              <div style={{ textAlign: 'right', marginTop: '5px' }}>
+                <span
+                  style={{ color: '#4facfe', cursor: 'pointer', fontSize: '0.95em', textDecoration: 'underline' }}
+                  onClick={() => setShowForgot(true)}
+                >
+                  Forgot Password?
+                </span>
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Login As</label>
+              <select name="role" onChange={handleChange}>
+                <option value="student">Student</option>
+                <option value="hod">HOD</option>
+                <option value="warden">Warden</option>
+                <option value="security">Security</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginBottom: '15px' }}>
+              Login
+            </button>
+            <div style={{ textAlign: 'center' }}>
+              <Link to="/register" style={{ color: '#4facfe', cursor: 'pointer', textDecoration: 'none' }}>
+                Don't have an account? Register here
+              </Link>
+            </div>
+          </form>
+        </div>
 
         {showForgot && (
           <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>

@@ -1,25 +1,42 @@
 const LeaveRequest = require('../models/LeaveRequest');
-const GatePass = require('../models/GatePass'); // Add this import
+const GatePass = require('../models/GatePass');
 const User = require('../models/User');
 const qrcode = require('qrcode');
 const { encrypt } = require('../utils/encryption');
 const notificationService = require('../services/notificationService');
-const emailService = require('../services/emailService');
-// ...existing code...
+const AdmissionData = require('../models/AdmissionData'); // Import the new model
 
 const generateRequestId = async () => {
-    const count = await LeaveRequest.countDocuments();
-    return `LR-${new Date().getFullYear()}-${String(count + 1).padStart(6, '0')}`;
+    let newRequestId;
+    let isUnique = false;
+    let count = await LeaveRequest.countDocuments();
+    while (!isUnique) {
+        newRequestId = `LR-${new Date().getFullYear()}-${String(count + 1).padStart(6, '0')}`;
+        const existingRequest = await LeaveRequest.findOne({ requestId: newRequestId });
+        if (!existingRequest) {
+            isUnique = true;
+        } else {
+            count++;
+        }
+    }
+    return newRequestId;
 };
 
 const generatePassId = async () => {
-    const count = await GatePass.countDocuments();
-    return `GP-${new Date().getFullYear()}-${String(count + 1).padStart(6, '0')}`;
+    let newPassId;
+    let isUnique = false;
+    let count = await GatePass.countDocuments();
+    while (!isUnique) {
+        newPassId = `GP-${new Date().getFullYear()}-${String(count + 1).padStart(6, '0')}`;
+        const existingPass = await GatePass.findOne({ passId: newPassId });
+        if (!existingPass) {
+            isUnique = true;
+        } else {
+            count++;
+        }
+    }
+    return newPassId;
 };
-
-// @desc    Create a new leave request
-// @route   POST /api/student/requests
-// @access  Private (student only)
 
 exports.createLeaveRequest = async (req, res) => {
     try {
@@ -51,7 +68,6 @@ exports.createLeaveRequest = async (req, res) => {
         let approvers = [];
 
         if (approverRole === 'hod') {
-            // Normalize the student's branch for a case-insensitive search
             const normalizedBranch = student.branch.toLowerCase().trim();
             approvers = await User.find({ 
                 role: 'hod', 
@@ -63,23 +79,44 @@ exports.createLeaveRequest = async (req, res) => {
 
         if (approvers.length > 0) {
             const subject = `New Leave Request from ${student.fullName}`;
+            
+            const uploadedPhotoUrl = student.photo?.secure_url || 'https://via.placeholder.com/100?text=No+Photo';
+            
+            // --- FETCHING DATA FROM MONGODB ---
+            const officialData = await AdmissionData.findOne({ pin: student.pin });
+            const officialPhotoUrl = officialData?.admissionNumber ? `https://media.campx.in/cec/student-photos/${officialData.admissionNumber}.jpg` : 'https://via.placeholder.com/100?text=No+Photo';
+            // --- END FETCHING DATA ---
+            
             const formattedMessage = `
-                <h1>New Leave Request: ${subject}</h1>
-                <p><strong>Student Name:</strong> ${student.fullName}</p>
-                <p><strong>PIN Number:</strong> ${student.pin}</p>
-                <p><strong>Branch:</strong> ${student.branch}</p>
-                <p><strong>Leave Type:</strong> ${leaveType}</p>
-                <p><strong>Reason:</strong> ${reason}</p>
-                <p><strong>Duration:</strong> ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}</p>
-                <p>Awaiting your approval. Please log in to the portal to review the request.</p>
+                <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    <h2 style="color: #2563eb;">New Leave Request: ${subject}</h2>
+                    
+                    <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px;">
+                        <div style="text-align: center;">
+                            <img src="${uploadedPhotoUrl}" alt="Uploaded Photo" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">
+                            <p style="font-size: 12px; margin-top: 5px;">Student Uploaded Photo</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <img src="${officialPhotoUrl}" alt="Official Photo" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">
+                            <p style="font-size: 12px; margin-top: 5px;">Official Photo (PIN: ${student.pin})</p>
+                        </div>
+                    </div>
+                    
+                    <p><strong>Student Name:</strong> ${student.fullName}</p>
+                    <p><strong>PIN Number:</strong> ${student.pin}</p>
+                    <p><strong>Branch:</strong> ${student.branch}</p>
+                    <p><strong>Leave Type:</strong> ${leaveType}</p>
+                    <p><strong>Reason:</strong> ${reason}</p>
+                    <p><strong>Duration:</strong> ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}</p>
+                    <p>Awaiting your approval. Please log in to the portal to review the request.</p>
+                </div>
             `;
 
             for (const approver of approvers) {
-                notificationService.sendEmail(approver.email, subject, formattedMessage);
                 notificationService.sendNotification(
                     approver._id,
                     subject,
-                    `A new leave request from ${student.fullName} is awaiting your approval.`,
+                    formattedMessage,
                     'leave_submitted',
                     { leaveRequestId: newRequest._id }
                 );
@@ -92,15 +129,11 @@ exports.createLeaveRequest = async (req, res) => {
     }
 };
 
-// @desc    Get all leave requests for the logged-in student
-// @route   GET /api/student/requests
-// @access  Private (student only)
 exports.getStudentLeaveRequests = async (req, res) => {
     try {
         const studentId = req.user.id;
-        // Add .populate() to fetch student details
         const requests = await LeaveRequest.find({ student: studentId })
-            .populate('student', 'fullName branch year') // Correctly populates student fields
+            .populate('student', 'fullName branch year photo') // Corrected populate to include photo
             .sort({ createdAt: -1 });
         res.status(200).json(requests);
     } catch (err) {
@@ -108,13 +141,11 @@ exports.getStudentLeaveRequests = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
-// @desc    Get a single leave request by ID
-// @route   GET /api/student/requests/:id
-// @access  Private (student only)
+
 exports.getSingleLeaveRequest = async (req, res) => {
     try {
         const request = await LeaveRequest.findById(req.params.id).populate('student', 'fullName pin branch year photo');
-        if (!request || request.student.toString() !== req.user.id) {
+        if (!request || request.student._id.toString() !== req.user.id) {
             return res.status(404).json({ message: 'Request not found' });
         }
         res.status(200).json(request);
@@ -124,9 +155,6 @@ exports.getSingleLeaveRequest = async (req, res) => {
     }
 };
 
-// @desc    Generate a gate pass for a student's approved request
-// @route   POST /api/student/generate-pass/:id
-// @access  Private (student only)
 exports.generateGatePass = async (req, res) => {
     try {
         const requestId = req.params.id;
@@ -163,46 +191,10 @@ exports.generateGatePass = async (req, res) => {
         leaveRequest.status = 'gate_pass_generated';
         leaveRequest.currentStage = 'completed';
         await leaveRequest.save();
-                res.status(201).json({ message: 'Gate pass generated successfully', gatePass: newGatePass });
-        } catch (err) {
-                console.error("Error in generateGatePass:", err);
-                res.status(500).json({ message: 'Server error', details: err.message });
-        }
-};
-
-// GET /api/student/profile
-exports.getStudentProfile = async (req, res) => {
-    try {
-        const user = req.user;
-        if (!user) return res.status(404).json({ error: 'User not found' });
-        res.json({
-            name: user.fullName || user.name,
-            email: user.email,
-            phone: user.phone || '',
-            branch: user.branch || '',
-            year: user.year || ''
-        });
+        res.status(201).json({ message: 'Gate pass generated successfully', gatePass: newGatePass });
     } catch (err) {
-        res.status(500).json({ error: 'Server error' });
-    }
-};
-
-// PUT /api/student/profile
-exports.updateStudentProfile = async (req, res) => {
-    try {
-        const user = req.user;
-        if (!user) return res.status(404).json({ error: 'User not found' });
-        const { name, email, phone, branch, year, password } = req.body;
-        if (name) user.fullName = name;
-        if (email) user.email = email;
-        if (phone) user.phone = phone;
-        if (branch) user.branch = branch;
-        if (year) user.year = year;
-        if (password) user.password = password; // Should hash in real app
-        await user.save();
-        res.json({ message: 'Profile updated successfully' });
-    } catch (err) {
-        res.status(500).json({ error: 'Server error' });
+        console.error("Error in generateGatePass:", err);
+        res.status(500).json({ message: 'Server error', details: err.message });
     }
 };
 
@@ -211,20 +203,15 @@ exports.deleteRequest = async (req, res) => {
         const requestId = req.params.id;
         const studentId = req.user.id;
         const leaveRequest = await LeaveRequest.findById(requestId);
-
         if (!leaveRequest) {
             return res.status(404).json({ message: 'Request not found.' });
         }
-
         if (leaveRequest.student.toString() !== studentId.toString()) {
             return res.status(403).json({ message: 'Not authorized to delete this request.' });
         }
-
-        // Only allow deletion of pending requests
         if (leaveRequest.status !== 'pending') {
             return res.status(400).json({ message: 'Only pending requests can be deleted.' });
         }
-
         await leaveRequest.deleteOne();
         res.status(200).json({ message: 'Request deleted successfully.', status: leaveRequest.status });
     } catch (err) {

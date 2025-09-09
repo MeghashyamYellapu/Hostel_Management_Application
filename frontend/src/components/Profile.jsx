@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Header from './common/Header';
 import '../styles.css';
 
+const API_BASE = process.env.REACT_APP_API_BASE;
+
 function Profile() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
@@ -13,7 +15,9 @@ function Profile() {
         pin: '',
         department: '',
         designation: '',
+        photo: null
     });
+    const [photoPreviewUrl, setPhotoPreviewUrl] = useState(null);
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -24,13 +28,20 @@ function Profile() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (!process.env.REACT_APP_API_BASE) {
+            console.error('API Base URL not found in environment variables');
+            setMessage('❌ API configuration error');
+        }
+    }, []);
+
+    useEffect(() => {
         const storedUser = JSON.parse(localStorage.getItem('user'));
         if (storedUser) {
             setUser(storedUser);
             const fetchProfile = async () => {
                 try {
                     const token = localStorage.getItem('token');
-                    const res = await fetch(`http://localhost:5000/api/auth/profile`, {
+                    const res = await fetch(`${API_BASE}/auth/profile`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     const data = await res.json();
@@ -42,7 +53,10 @@ function Profile() {
                             pin: data.user.pin || '',
                             department: data.user.department || '',
                             designation: data.user.designation || '',
+                            photo: null
                         });
+                        // Set the photo preview URL from the fetched data
+                        setPhotoPreviewUrl(data.user.photo?.secure_url || null);
                     } else {
                         setMessage(`❌ ${data.message || 'Failed to fetch profile.'}`);
                     }
@@ -57,7 +71,13 @@ function Profile() {
     }, []);
 
     const handleProfileChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        if (e.target.name === 'photo') {
+            const file = e.target.files[0];
+            setFormData({ ...formData, photo: file });
+            setPhotoPreviewUrl(file ? URL.createObjectURL(file) : null);
+        } else {
+            setFormData({ ...formData, [e.target.name]: e.target.value });
+        }
     };
 
     const handlePasswordChange = (e) => {
@@ -69,18 +89,19 @@ function Profile() {
         setMessage('');
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/auth/profile', {
+            const form = new FormData();
+            Object.entries(formData).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) form.append(key, value);
+            });
+            const res = await fetch(`${API_BASE}/auth/profile`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(formData)
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: form
             });
             const data = await res.json();
             if (res.ok) {
                 setMessage('✅ Profile updated successfully!');
-                const updatedUser = { ...user, ...formData };
+                const updatedUser = { ...user, ...formData, photoUrl: data.user.photoUrl };
                 localStorage.setItem('user', JSON.stringify(updatedUser));
                 setTimeout(() => window.location.reload(), 1500);
             } else {
@@ -100,7 +121,7 @@ function Profile() {
         }
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/auth/password', {
+            const res = await fetch(`${API_BASE}/auth/password`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -133,6 +154,30 @@ function Profile() {
                 {message && <p style={{ textAlign: 'center', color: message.startsWith('✅') ? 'green' : 'red' }}>{message}</p>}
 
                 <form style={{ maxWidth: '600px', margin: '0 auto' }} onSubmit={handleProfileSubmit}>
+                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                        <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #ccc', margin: '0 auto 10px', overflow: 'hidden' }}>
+                            {photoPreviewUrl ? (
+                                <img
+                                    src={photoPreviewUrl}
+                                    alt="Profile Preview"
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                            ) : (
+                                <span style={{ color: '#888', fontSize: '14px', textAlign: 'center' }}>No Photo</span>
+                            )}
+                        </div>
+                        <label htmlFor="photo-upload" className="btn btn-secondary">
+                            Upload New Photo
+                        </label>
+                        <input
+                            type="file"
+                            id="photo-upload"
+                            name="photo"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={handleProfileChange}
+                        />
+                    </div>
                     <div className="form-group">
                         <label>Full Name</label>
                         <input type="text" name="fullName" value={formData.fullName} onChange={handleProfileChange} required />

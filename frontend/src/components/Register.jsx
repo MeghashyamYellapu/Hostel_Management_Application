@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles.css";
 
+const API_BASE = process.env.REACT_APP_API_BASE;
+
 function Register() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -64,7 +66,7 @@ function Register() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
+      const res = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
         body: dataToSend
       });
@@ -154,11 +156,12 @@ function Register() {
             <div className="form-group">
               <label>Branch/Department</label>
               <select name="branch" value={formData.branch} onChange={handleChange} required>
-                <option value="Computer Science">Computer Science</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Mechanical">Mechanical</option>
-                <option value="Civil">Civil</option>
-                <option value="Electrical">Electrical</option>
+                <option value="CSE">CSE</option>
+                <option value="ECE">ECE</option>
+                <option value="MECH">MECH</option>
+                <option value="CIVIL">CIVIL</option>
+                <option value="EEE">EEE</option>
+                <option value="AI">AI(ML & DS)</option>
               </select>
             </div>
           </div>
