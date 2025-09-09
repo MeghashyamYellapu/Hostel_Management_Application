@@ -3,6 +3,8 @@ import Header from './common/Header';
 import '../styles.css';
 import { admissionData } from '../data/admissionData'; // Import the admission data
 
+const API_BASE = process.env.REACT_APP_API_BASE;
+
 function HodDashboard() {
   const [requests, setRequests] = useState([]);
   const [stats, setStats] = useState({ pending: 0, approvedThisMonth: 0, rejected: 0 });
@@ -12,7 +14,7 @@ function HodDashboard() {
     const fetchRequests = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:5000/api/hod/requests', {
+        const res = await fetch(`${API_BASE}/hod/requests`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -34,7 +36,7 @@ function HodDashboard() {
     if (comments === null) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/hod/requests/${requestId}/status`, {
+      const res = await fetch(`${API_BASE}/hod/requests/${requestId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

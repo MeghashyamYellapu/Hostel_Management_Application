@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import Header from './common/Header';
 import '../styles.css';
 
+const API_BASE = process.env.REACT_APP_API_BASE;
+
 function StudentDashboard() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
@@ -13,7 +15,7 @@ function StudentDashboard() {
     const fetchRequests = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:5000/api/student/requests', {
+        const res = await fetch(`${API_BASE}/student/requests`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -39,7 +41,7 @@ function StudentDashboard() {
   const handleGeneratePass = async (requestId) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/student/generate-pass/${requestId}`, {
+      const res = await fetch(`${API_BASE}/student/generate-pass/${requestId}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -59,7 +61,7 @@ function StudentDashboard() {
     if (!window.confirm('Are you sure you want to delete this request?')) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/student/requests/${requestId}`, {
+      const res = await fetch(`${API_BASE}/student/requests/${requestId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
