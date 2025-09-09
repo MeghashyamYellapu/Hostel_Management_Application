@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 
+const API_BASE = process.env.REACT_APP_API_BASE;
+
 const NotificationContext = createContext();
 
 export const useNotifications = () => useContext(NotificationContext);
@@ -13,7 +15,7 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user && user.id) {
-      const newSocket = io('http://localhost:5000', {
+      const newSocket = io(`${API_BASE}`, {
         query: { userId: user.id }
       });
       setSocket(newSocket);
@@ -21,7 +23,7 @@ export const NotificationProvider = ({ children }) => {
       // Fetch existing notifications
       const fetchNotifications = async () => {
         const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:5000/api/notifications', {
+        const res = await fetch(`${API_BASE}/notifications`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -48,7 +50,7 @@ export const NotificationProvider = ({ children }) => {
   const markAsRead = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
+      await fetch(`${API_BASE}/notifications/${id}/read`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });

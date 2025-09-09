@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Header from './common/Header';
 import '../styles.css';
 
+const API_BASE = process.env.REACT_APP_API_BASE;
+
 function Profile() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
@@ -26,13 +28,20 @@ function Profile() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (!process.env.REACT_APP_API_BASE) {
+            console.error('API Base URL not found in environment variables');
+            setMessage('❌ API configuration error');
+        }
+    }, []);
+
+    useEffect(() => {
         const storedUser = JSON.parse(localStorage.getItem('user'));
         if (storedUser) {
             setUser(storedUser);
             const fetchProfile = async () => {
                 try {
                     const token = localStorage.getItem('token');
-                    const res = await fetch(`http://localhost:5000/api/auth/profile`, {
+                    const res = await fetch(`${API_BASE}/auth/profile`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     const data = await res.json();
@@ -76,44 +85,32 @@ function Profile() {
     };
 
     const handleProfileSubmit = async (e) => {
-    e.preventDefault();
-    setMessage('');
-    try {
-        const token = localStorage.getItem('token');
-        const form = new FormData();
-        Object.entries(formData).forEach(([key, value]) => {
-            if (value !== null && value !== undefined) form.append(key, value);
-        });
-
-        // Use a different endpoint if there's no photo
-        const res = await fetch('http://localhost:5000/api/auth/profile', {
-            method: 'PUT',
-            headers: {
-                // The browser will automatically set the correct Content-Type for FormData
-                'Authorization': `Bearer ${token}`
-            },
-            body: form
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-            setMessage('✅ Profile updated successfully!');
-            const updatedUser = { 
-                ...user, 
-                ...formData,
-                photo: data.user.photo
-            };
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-            setTimeout(() => window.location.reload(), 1500);
-        } else {
-            setMessage(`❌ ${data.message || 'Failed to update profile.'}`);
+        e.preventDefault();
+        setMessage('');
+        try {
+            const token = localStorage.getItem('token');
+            const form = new FormData();
+            Object.entries(formData).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) form.append(key, value);
+            });
+            const res = await fetch(`${API_BASE}/auth/profile`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: form
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setMessage('✅ Profile updated successfully!');
+                const updatedUser = { ...user, ...formData, photoUrl: data.user.photoUrl };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                setMessage(`❌ ${data.message || 'Failed to update profile.'}`);
+            }
+        } catch (err) {
+            setMessage('❌ Server error. Failed to update profile.');
         }
-    } catch (err) {
-        setMessage('❌ Server error. Failed to update profile.');
-    }
-};
-
-
+    };
 
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
@@ -124,7 +121,7 @@ function Profile() {
         }
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/auth/password', {
+            const res = await fetch(`${API_BASE}/auth/password`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
